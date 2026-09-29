@@ -1,0 +1,2133 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendario Pro</title>
+<meta name="theme-color" content="#4f6bff">
+<meta name="description" content="Calendario con recordatorios, tareas y notas. Funciona sin internet.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f6bff'/%3E%3Crect x='14' y='18' width='36' height='32' rx='5' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M14 28h36M23 12v10M41 12v10' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M25 40l5 5 9-10' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f4f5fa; --surface:#ffffff; --surface2:#eef0f7; --border:#e2e5ef; --text:#1b1f33; --muted:#6a7291;
+  --accent:#4f6bff; --accent-soft:rgba(79,107,255,.12); --danger:#e5484d; --danger-soft:rgba(229,72,77,.12); --ok:#2fb573;
+  --shadow:0 1px 2px rgba(20,25,60,.06),0 10px 30px rgba(20,25,60,.10); --radius:12px;
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --hh:56px;
+}
+[data-theme=dark]{
+  --bg:#0e1019; --surface:#161927; --surface2:#1e2233; --border:#2a2f45; --text:#e9ebf7; --muted:#8e96b8;
+  --accent:#7b8dff; --accent-soft:rgba(123,141,255,.16); --danger:#ff6b70; --danger-soft:rgba(255,107,112,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.sm{width:14px;height:14px}
+
+/* layout */
+#app{display:grid;grid-template-columns:276px minmax(0,1fr);height:100vh;height:100dvh}
+#sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 14px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;min-height:0}
+#main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#scrim{display:none}
+.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;letter-spacing:-.01em;padding:2px 4px}
+.brand b{color:var(--accent)}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center}
+.logo svg{width:18px;height:18px}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 13px;border:1px solid var(--border);background:var(--surface);border-radius:9px;font-weight:500;line-height:1.2;white-space:nowrap;transition:background .12s,filter .12s}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.1);background:var(--accent)}
+.btn.danger{color:var(--danger);border-color:transparent;background:var(--danger-soft)}
+.btn.danger:hover{background:var(--danger-soft);filter:brightness(.96)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface2);color:var(--text)}
+.btn.big{padding:10px 14px;font-size:14px;width:100%}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;border:0;background:transparent;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--surface2);color:var(--text)}
+.icon-btn.sm{width:26px;height:26px;border-radius:7px}
+input[type=text],input[type=date],input[type=time],input[type=search],select,textarea,input:not([type]){background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;outline:none;min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+textarea{resize:vertical;width:100%}
+.seg{display:inline-flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;color:var(--muted);font-weight:500}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* sidebar bits */
+.mc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 2px}
+.mc-head b{font-size:13.5px}
+.mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+.mc-grid i{font-style:normal;font-size:11px;color:var(--muted);padding:4px 0}
+.mc-day{position:relative;border:0;background:transparent;border-radius:50%;aspect-ratio:1;font-size:12px;color:var(--text);padding:0;display:grid;place-items:center}
+.mc-day:hover{background:var(--surface2)}
+.mc-day.other{color:var(--muted);opacity:.55}
+.mc-day.today{background:var(--accent);color:#fff;font-weight:700}
+.mc-day.sel:not(.today){box-shadow:inset 0 0 0 1.5px var(--accent)}
+.mc-day u{position:absolute;bottom:2px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.mc-day.today u{background:#fff}
+.sb-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 2px 6px;display:flex;justify-content:space-between;align-items:center}
+.up-item{display:flex;gap:9px;padding:6px 6px;border-radius:8px;cursor:pointer;align-items:flex-start}
+.up-item:hover{background:var(--surface2)}
+.up-dot{width:8px;height:8px;border-radius:3px;background:var(--c);margin-top:5px;flex:none}
+.up-t{font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up-s{font-size:11.5px;color:var(--muted)}
+.empty-s{font-size:12.5px;color:var(--muted);padding:2px 6px}
+.cat-row{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:8px;cursor:pointer;user-select:none}
+.cat-row:hover{background:var(--surface2)}
+.cat-row .sw{width:14px;height:14px;border-radius:4px;border:2px solid var(--c);background:var(--c);flex:none}
+.cat-row.off .sw{background:transparent}
+.cat-row.off span:last-child{color:var(--muted);text-decoration:line-through}
+.sb-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+
+/* topbar */
+#topbar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface)}
+.tabs{display:flex;gap:4px}
+.tab{display:flex;align-items:center;gap:7px;border:0;background:transparent;padding:8px 13px;border-radius:9px;color:var(--muted);font-weight:500}
+.tab:hover{background:var(--surface2);color:var(--text)}
+.tab.on{background:var(--accent-soft);color:var(--accent)}
+.badge{background:var(--danger);color:#fff;border-radius:99px;font-size:11px;padding:0 6px;line-height:17px;min-width:17px;text-align:center;font-weight:600}
+.spacer{flex:1}
+.search{position:relative;width:min(340px,38vw)}
+.search input{width:100%;padding-left:34px;background:var(--surface2);border-color:transparent}
+.search .i{position:absolute;left:10px;top:9px;color:var(--muted);pointer-events:none}
+#searchRes{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);max-height:60vh;overflow:auto;z-index:50;padding:6px}
+.sr-h{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 8px 2px;font-weight:600}
+.sr-i{display:flex;gap:8px;align-items:center;padding:7px 8px;border-radius:8px;cursor:pointer}
+.sr-i:hover{background:var(--surface2)}
+.sr-i small{color:var(--muted);margin-left:auto;white-space:nowrap}
+.only-narrow{display:none}
+#banner .bn{display:flex;align-items:center;gap:12px;background:var(--accent-soft);color:var(--text);padding:9px 18px;border-bottom:1px solid var(--border)}
+#banner .bn span{flex:1}
+
+/* headers */
+.head{padding:14px 18px 10px;display:flex;flex-direction:column;gap:10px}
+.tool-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.nav{display:flex;align-items:center;gap:6px;min-width:0}
+.nav h1,.head h1{font-size:20px;margin:0 0 0 8px;font-weight:650;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-wrap{position:relative}
+.quick-wrap input{width:100%;padding:11px 14px;border-radius:11px;font-size:14.5px;background:var(--surface);box-shadow:0 1px 2px rgba(20,25,60,.05)}
+.qprev{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;min-height:0}
+.qprev:empty{display:none}
+.qp{display:inline-flex;align-items:center;gap:5px;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:3px 10px;font-size:12.5px;font-weight:500}
+.qp.t{background:var(--surface2);color:var(--text)}
+.qp.warn{background:var(--danger-soft);color:var(--danger)}
+
+#view{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.pad{padding:6px 18px 24px}
+
+/* month */
+.month{flex:1;display:flex;flex-direction:column;min-height:420px;margin:0 18px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}
+.m-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--border);background:var(--surface)}
+.m-dow div{padding:8px 6px;text-align:center;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.m-grid{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-height:0}
+.cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 5px 3px;min-width:0;min-height:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:2px;position:relative}
+.cell:nth-child(7n){border-right:0}
+.cell.other{background:color-mix(in srgb,var(--surface2) 55%,var(--surface))}
+.cell.other .dnum{color:var(--muted)}
+.cell:hover{background:var(--surface2)}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell.drop{background:var(--accent-soft)}
+.cell-head{display:flex;justify-content:space-between;align-items:center;flex:none}
+.dnum{min-width:26px;height:26px;padding:0 4px;display:grid;place-items:center;border-radius:13px;font-size:12.5px;font-weight:600;cursor:pointer}
+.dnum:hover{background:var(--accent-soft);color:var(--accent)}
+.cell.today .dnum{background:var(--accent);color:#fff}
+.chips{display:flex;flex-direction:column;gap:2px;min-height:0}
+.chip{font-size:12px;line-height:1.35;padding:1px 6px;border-radius:5px;background:var(--cb);border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;flex:none}
+.chip:hover{filter:brightness(.95)}
+.chip .tm{color:var(--muted);margin-right:3px;font-variant-numeric:tabular-nums}
+.chip.cont{border-left-width:0;border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-5px;padding-left:9px}
+.chip.task .tk{display:inline-block;width:11px;height:11px;border:1.5px solid var(--c);border-radius:3px;margin-right:4px;vertical-align:-1px}
+.chip.task.done{opacity:.55;text-decoration:line-through}
+.chip.task.done .tk{background:var(--c)}
+.more{font-size:11.5px;color:var(--muted);padding:0 6px;cursor:pointer;flex:none}
+.more:hover{color:var(--accent)}
+.dots{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px}
+.dots u{width:6px;height:6px;border-radius:50%;background:var(--c)}
+
+/* time grid */
+.tg{flex:1;min-height:0;margin:0 18px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
+.tg-scroll{flex:1;overflow:auto;position:relative;--headh:54px}
+.tg-row{display:grid;grid-template-columns:58px repeat(var(--n),minmax(0,1fr))}
+.tg-head{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border);height:var(--headh)}
+.tg-day{display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--border);cursor:pointer;gap:1px}
+.tg-day .dw{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tg-day .dn{font-size:17px;font-weight:650;width:30px;height:30px;display:grid;place-items:center;border-radius:15px}
+.tg-day.today .dn{background:var(--accent);color:#fff}
+.tg-day.today .dw{color:var(--accent)}
+.tg-allday{position:sticky;top:var(--headh);z-index:4;background:var(--surface);border-bottom:1px solid var(--border);min-height:30px}
+.tg-allday .gut{font-size:10.5px;color:var(--muted);padding:8px 6px 0 0;text-align:right;line-height:1.1}
+.ad-col{border-left:1px solid var(--border);padding:3px;display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer}
+.tg-grid{height:calc(24 * var(--hh));position:relative}
+.gut{position:relative}
+.hl{position:absolute;right:8px;transform:translateY(-50%);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tg-col{position:relative;border-left:1px solid var(--border);background-image:linear-gradient(var(--border) 1px,transparent 1px);background-size:100% var(--hh);cursor:pointer;min-width:0}
+.tg-col.today{background-color:var(--accent-soft)}
+.blk{position:absolute;padding:2px 6px;border-radius:7px;background:var(--cb);border-left:3px solid var(--c);overflow:hidden;font-size:12px;line-height:1.3;cursor:pointer;box-shadow:0 0 0 1px var(--surface)}
+.blk:hover{filter:brightness(.95);z-index:3}
+.blk b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk small{color:var(--muted);font-size:11px}
+.blk.done{opacity:.55;text-decoration:line-through}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:4;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
+
+/* agenda / lists */
+.ag-day{margin:0 18px 14px}
+.ag-h{font-weight:650;font-size:14px;padding:6px 2px;display:flex;gap:8px;align-items:baseline;position:sticky;top:0;background:var(--bg);z-index:2}
+.ag-h small{color:var(--muted);font-weight:400}
+.ag-h.today{color:var(--accent)}
+.ag-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.row-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;position:relative}
+.row-item:last-child{border-bottom:0}
+.row-item:hover{background:var(--surface2)}
+.row-item .bar{width:4px;align-self:stretch;border-radius:4px;background:var(--c);flex:none}
+.row-item .rt{width:108px;flex:none;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.row-item .rb{min-width:0;flex:1}
+.rtitle{font-weight:550;overflow:hidden;text-overflow:ellipsis}
+.rtitle.done{text-decoration:line-through;color:var(--muted)}
+.rsub{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}
+.empty .i{width:40px;height:40px;opacity:.4;margin-bottom:10px}
+.cb{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;flex:none;background:transparent;padding:0;color:#fff}
+.cb.on{background:var(--ok);border-color:var(--ok)}
+.cb .i{width:13px;height:13px;stroke-width:3;opacity:0}
+.cb.on .i{opacity:1}
+.tchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.tc{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;background:var(--surface2);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.tc.over{background:var(--danger-soft);color:var(--danger)}
+.tc.p1{color:#d98a00}.tc.p2{color:var(--danger)}
+.task-h{margin:16px 2px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:650}
+.task-h.over{color:var(--danger)}
+
+/* notes */
+.notes{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr);margin:6px 18px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}
+.n-side{border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.n-tools{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--border)}
+.n-tools input{flex:1}
+#nList{overflow:auto;flex:1;padding:6px}
+.n-item{padding:10px 11px;border-radius:10px;cursor:pointer;margin-bottom:2px}
+.n-item:hover{background:var(--surface2)}
+.n-item.on{background:var(--accent-soft)}
+.n-item b{display:flex;gap:6px;align-items:center;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.n-item p{margin:2px 0 0;color:var(--muted);font-size:12.5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.n-item small{color:var(--muted);font-size:11px}
+.n-main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.n-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);color:var(--muted);font-size:12px}
+.n-bar .spacer{flex:1}
+#noteTitle{border:0;font-size:22px;font-weight:650;padding:16px 20px 4px;letter-spacing:-.01em;background:transparent;border-radius:0;box-shadow:none!important}
+#noteBody{flex:1;border:0;resize:none;padding:8px 20px 20px;line-height:1.6;font-size:15px;background:transparent;border-radius:0;box-shadow:none!important;min-height:0}
+.back-btn{display:none}
+
+/* dialogs */
+dialog{border:0;padding:0;border-radius:18px;background:var(--surface);color:var(--text);box-shadow:var(--shadow);width:min(580px,calc(100vw - 20px));max-height:calc(100dvh - 24px);overflow:hidden}
+dialog[open]{display:flex}
+dialog::backdrop{background:rgba(8,10,22,.55);backdrop-filter:blur(2px)}
+dialog.sm{width:min(420px,calc(100vw - 20px))}
+.modal{display:flex;flex-direction:column;width:100%;min-height:0;max-height:calc(100dvh - 24px)}
+.modal-head{display:flex;align-items:center;gap:8px;padding:14px 14px 4px 18px}
+.modal-head h2{margin:0;font-size:17px;flex:1}
+.title-input{flex:1;font-size:20px!important;font-weight:600;border:0!important;border-bottom:2px solid var(--border)!important;border-radius:0!important;padding:8px 2px!important;box-shadow:none!important;background:transparent!important}
+.title-input:focus{border-bottom-color:var(--accent)!important}
+.modal-body{padding:10px 18px 6px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.modal-foot{display:flex;gap:8px;padding:12px 18px 16px;align-items:center;flex-wrap:wrap}
+.modal-foot .spacer{flex:1}
+.modal p{margin:0;color:var(--muted)}
+.frow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.frow.top{align-items:flex-start}
+.ficon{color:var(--muted);width:20px;display:grid;place-items:center;flex:none}
+.dtpair{display:flex;gap:6px;flex-wrap:wrap}
+.dash{color:var(--muted)}
+.chk{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{position:relative;cursor:pointer}
+.pill input{position:absolute;opacity:0}
+.pill span{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:99px;border:1.5px solid var(--border);font-size:13px}
+.pill span::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--c)}
+.pill input:checked+span{border-color:var(--c);background:var(--cb);font-weight:600}
+.pill input:focus-visible+span{box-shadow:0 0 0 3px var(--accent-soft)}
+.rem-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.field>label,.lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.set-sec{display:flex;flex-direction:column;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.set-sec:last-child{border-bottom:0}
+.set-sec h3{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.steps{margin:4px 0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.steps a{color:var(--accent);font-weight:600}
+code{background:var(--surface2);padding:1px 6px;border-radius:5px;font-size:12.5px}
+.wa-row{display:flex;gap:6px;flex-wrap:wrap}
+.wa-preview{margin:0;padding:12px;background:var(--surface2);border-radius:10px;white-space:pre-wrap;font:inherit;font-size:13.5px;max-height:180px;overflow:auto}
+.person{border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.p-top{display:flex;gap:8px;align-items:center}
+.p-top input[type=text]{flex:1;font-weight:600}
+.code-row{display:flex;gap:6px;flex-wrap:wrap}
+.code-row input{flex:1 1 190px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+#phoneFoot{color:var(--text)}
+.cat-edit{display:flex;gap:8px;align-items:center}
+.cat-edit input[type=color]{width:34px;height:34px;padding:2px;border-radius:9px;border:1px solid var(--border);background:var(--surface);flex:none}
+.cat-edit input[type=text]{flex:1}
+
+/* toasts & alerts */
+#toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:200;align-items:center;pointer-events:none}
+.toast{background:#1b1f33;color:#fff;padding:10px 16px;border-radius:11px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;pointer-events:auto;animation:up .2s ease}
+.toast button{background:transparent;border:0;color:#9db0ff;font-weight:600;padding:0}
+.toast.out{opacity:0;transition:opacity .3s}
+#alerts{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:10px;z-index:150;width:min(380px,calc(100vw - 28px))}
+.alert{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);border-radius:14px;box-shadow:var(--shadow);padding:14px 14px 12px;animation:slide .25s ease}
+.alert .ah{display:flex;gap:10px;align-items:flex-start}
+.alert .ah .bell{color:var(--c);margin-top:2px;animation:ring 1s ease 2}
+.alert .at{font-weight:650;font-size:15px;word-break:break-word}
+.alert .as{color:var(--muted);font-size:12.5px;margin-top:1px}
+.alert .ab{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.alert .ab .btn{padding:5px 10px;font-size:12.5px}
+.alert .ab .lbl2{font-size:12px;color:var(--muted);margin-right:2px}
+.fab{display:none}
+@keyframes up{from{transform:translateY(10px);opacity:0}}
+@keyframes slide{from{transform:translateX(30px);opacity:0}}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(16deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(10deg)}80%{transform:rotate(-6deg)}}
+
+/* responsive */
+@media (max-width:900px){
+  #app{grid-template-columns:1fr}
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:284px;z-index:90;transform:translateX(-102%);transition:transform .22s ease;box-shadow:var(--shadow)}
+  body.sb-open #sidebar{transform:none}
+  body.sb-open #scrim{display:block;position:fixed;inset:0;background:rgba(8,10,22,.45);z-index:80}
+  .only-narrow{display:grid}
+  .search{width:auto;flex:1}
+}
+@media (max-width:700px){
+  #topbar{padding:8px 10px;gap:6px}
+  .tab span.tl{display:none}
+  .tab{padding:8px 10px}
+  .head{padding:10px 12px 8px}
+  .nav h1,.head h1{font-size:17px}
+  .month,.tg{margin:0 8px 8px;border-radius:12px}
+  .month{min-height:0;flex:none}
+  .m-grid{grid-auto-rows:minmax(52px,auto)}
+  .cell{padding:3px 2px;align-items:center}
+  .cell .chips,.cell .more{display:none}
+  .pad,.ag-day{padding-left:10px;padding-right:10px;margin-left:0;margin-right:0}
+  .row-item .rt{width:82px}
+  .fab{display:grid;position:fixed;right:16px;bottom:18px;width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;border:0;place-items:center;box-shadow:var(--shadow);z-index:60}
+  .fab .i{width:24px;height:24px}
+  .notes{grid-template-columns:1fr;margin:0 8px 8px}
+  .notes .n-main{display:none}
+  .notes.show-editor .n-side{display:none}
+  .notes.show-editor .n-main{display:flex}
+  .back-btn{display:grid}
+  .seg button{padding:6px 9px}
+}
+@media print{#sidebar,#topbar,.head,#alerts,#toasts{display:none!important}body{overflow:visible}#app{display:block;height:auto}}
+</style>
+</head>
+<body>
+<noscript>Calendario Pro necesita JavaScript activado para funcionar.</noscript>
+<div id="app">
+  <div id="scrim" data-act="close-sidebar"></div>
+  <aside id="sidebar" aria-label="Panel lateral">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2.2 2.2L15.5 13"/></svg></span><span>Calendario <b>Pro</b></span></div>
+    <button class="btn primary big" data-act="new-event" id="newEventBtn"></button>
+    <div id="miniCal"></div>
+    <div><div class="sb-title">Próximamente</div><div id="upcoming"></div></div>
+    <div><div class="sb-title"><span>Categorías</span><button class="icon-btn sm" data-act="settings" title="Editar categorías"></button></div><div id="cats"></div></div>
+    <div class="sb-foot" id="sbFoot"></div>
+  </aside>
+
+  <main id="main">
+    <header id="topbar">
+      <button class="icon-btn only-narrow" data-act="toggle-sidebar" id="menuBtn" aria-label="Menú"></button>
+      <nav class="tabs" id="tabs"></nav>
+      <div class="spacer"></div>
+      <div class="search">
+        <span id="searchIcon"></span>
+        <input type="search" id="search" placeholder="Buscar  ( / )" autocomplete="off" aria-label="Buscar">
+        <div id="searchRes" hidden></div>
+      </div>
+      <button class="icon-btn" data-act="toggle-theme" id="themeBtn" title="Cambiar tema"></button>
+      <button class="icon-btn" data-act="settings" id="setBtn" title="Ajustes y copia de seguridad"></button>
+    </header>
+    <div id="banner"></div>
+
+    <div id="calHead" class="head">
+      <div class="tool-row">
+        <div class="nav">
+          <button class="btn" data-act="today">Hoy</button>
+          <button class="icon-btn" data-act="prev" id="prevBtn" aria-label="Anterior"></button>
+          <button class="icon-btn" data-act="next" id="nextBtn" aria-label="Siguiente"></button>
+          <h1 id="calTitle"></h1>
+        </div>
+        <div class="seg" id="viewSeg"></div>
+      </div>
+      <div class="quick-wrap">
+        <input id="quick" type="text" placeholder="Escribe rápido: «Dentista mañana 4pm» o «Reunión el viernes 10am cada semana»" autocomplete="off">
+        <div class="qprev" id="quickPrev"></div>
+      </div>
+    </div>
+
+    <div id="taskHead" class="head" hidden>
+      <div class="tool-row"><h1 style="margin-left:0">Tareas</h1><div class="seg" id="taskSeg"></div></div>
+      <div class="quick-wrap">
+        <input id="taskQuick" type="text" placeholder="Nueva tarea… (ej: «Pagar el arriendo el 5 a las 9am»)" autocomplete="off">
+        <div class="qprev" id="taskPrev"></div>
+      </div>
+    </div>
+
+    <section id="view" aria-live="polite"></section>
+  </main>
+</div>
+<button class="fab" data-act="new-event" id="fab" aria-label="Nuevo evento"></button>
+<dialog id="dlg"></dialog>
+<div id="alerts" aria-live="assertive"></div>
+<div id="toasts"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   Utilidades
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const fmtDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return fmtDate(d); };
+const diffDays = (a, b) => Math.round((parseDate(b) - parseDate(a)) / 864e5);
+const today = () => fmtDate(new Date());
+const toMin = t => { const [h, m] = String(t).split(':').map(Number); return h * 60 + (m || 0); };
+const fromMin = m => { m = Math.max(0, Math.min(1439, m)); return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; };
+const plus = (t, mins) => fromMin(toMin(t) + mins);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const clone = o => JSON.parse(JSON.stringify(o));
+const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+
+const DAY_S = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const DAY_L = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const WDN = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+const MON_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MON_S = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const HH = 56;
+const DAY_MS = 864e5;
+const REM_OPTS = [0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];
+const REPEATS = [['none', 'No se repite'], ['daily', 'Todos los días'], ['weekdays', 'Lunes a viernes'], ['weekly', 'Cada semana'], ['biweekly', 'Cada 2 semanas'], ['monthly', 'Cada mes'], ['yearly', 'Cada año']];
+const REPEAT_TXT = { daily: 'Todos los días', weekdays: 'Lunes a viernes', weekly: 'Cada semana', biweekly: 'Cada 2 semanas', monthly: 'Cada mes', yearly: 'Cada año' };
+const PALETTE = ['#4f6bff', '#ef6c57', '#f5a524', '#2fb573', '#a855f7', '#ec4899', '#14b8a6', '#64748b'];
+
+const ICON = {
+  left: '<polyline points="15 18 9 12 15 6"/>', right: '<polyline points="9 18 15 12 9 6"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  tasks: '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  note: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  menu: '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  sun: '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+  repeat: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+  pin: '<line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  pinmap: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  up: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  check: '<polyline points="20 6 9 17 4 12"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+};
+const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+
+/* =====================================================================
+   Estado y almacenamiento
+   ===================================================================== */
+const KEY = 'calendario-pro:v1';
+let S;
+let storageOK = true;
+const is12h = () => { try { return !!new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12; } catch (e) { return false; } };
+
+function defaults() {
+  return {
+    v: 1, events: [], tasks: [], notes: [], fired: {}, snoozes: [],
+    phone: { on: false, server: 'https://ntfy.sh', people: [], sched: {} },
+    sync: { on: false, token: '', gist: '', key: '', api: '', etag: '', last: 0, first: false, pending: false, upd: {}, sig: {}, del: {}, bupd: {}, bsig: {} },
+    categories: [
+      { id: 'personal', name: 'Personal', color: '#4f6bff' },
+      { id: 'trabajo', name: 'Trabajo', color: '#ef6c57' },
+      { id: 'estudio', name: 'Estudio', color: '#a855f7' },
+      { id: 'salud', name: 'Salud', color: '#2fb573' },
+      { id: 'familia', name: 'Familia', color: '#ec4899' },
+      { id: 'otros', name: 'Otros', color: '#64748b' }
+    ],
+    settings: { theme: 'auto', weekStart: 1, view: 'month', sound: true, notify: true, defaultReminder: 10, allDayHour: 9, hour12: is12h(), lastBackup: 0, hiddenCats: [], showTasks: true, lastCat: '', waContacts: [], created: Date.now() }
+  };
+}
+
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { storageOK = false; }
+  if (raw) {
+    try {
+      const o = JSON.parse(raw), d = defaults();
+      S = Object.assign(d, o);
+      S.settings = Object.assign(defaults().settings, o.settings || {});
+      ['events', 'tasks', 'notes', 'snoozes'].forEach(k => { if (!Array.isArray(S[k])) S[k] = []; });
+      if (!S.fired || typeof S.fired !== 'object') S.fired = {};
+      const ph = o.phone || {};
+      S.phone = Object.assign(defaults().phone, ph);
+      if (!Array.isArray(S.phone.people)) S.phone.people = [];
+      if (ph.topic && !S.phone.people.length) { S.phone.people.push({ id: 'p' + uid(), name: 'Mi celular', topic: ph.topic, on: true }); S.phone.sched = {}; }
+      delete S.phone.topic;
+      S.sync = Object.assign(defaults().sync, o.sync || {});
+      ['upd', 'sig', 'del', 'bupd', 'bsig'].forEach(k => { if (!S.sync[k] || typeof S.sync[k] !== 'object') S.sync[k] = {}; });
+      if (!S.phone.sched || typeof S.phone.sched !== 'object') S.phone.sched = {};
+      if (!Array.isArray(S.categories) || !S.categories.length) S.categories = defaults().categories;
+      return;
+    } catch (e) {
+      console.warn('Datos ilegibles, se guardó una copia en :corrupt', e);
+      try { localStorage.setItem(KEY + ':corrupt', raw); } catch (_) { }
+    }
+  }
+  S = defaults();
+  seed();
+}
+
+function save(quiet) {
+  if (!storageOK) return;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { storageOK = false; toast('No se pudo guardar en este navegador. Usa «Exportar copia» para no perder datos.', { ms: 8000 }); }
+  if (quiet) return;
+  if (S.phone && S.phone.on) phoneSoon();
+  if (S.sync && S.sync.on) syncSoon();
+}
+let saveTimer;
+const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); };
+const snapshot = () => JSON.stringify({ events: S.events, tasks: S.tasks, notes: S.notes });
+function restore(snap) { const o = JSON.parse(snap); S.events = o.events; S.tasks = o.tasks; S.notes = o.notes; save(); render(); }
+
+function seed() {
+  const t = today();
+  S.events.push(
+    { id: uid(), demo: true, title: 'Ejemplo · Reunión de equipo', date: addDays(t, 1), endDate: addDays(t, 1), allDay: false, start: '10:00', end: '11:00', cat: 'trabajo', repeat: 'none', reminders: [], location: 'Sala 2', notes: '' },
+    { id: uid(), demo: true, title: 'Ejemplo · Cumpleaños de Ana', date: addDays(t, 3), endDate: addDays(t, 3), allDay: true, start: '', end: '', cat: 'familia', repeat: 'yearly', reminders: [], location: '', notes: '' },
+    { id: uid(), demo: true, title: 'Ejemplo · Gimnasio', date: t, endDate: t, allDay: false, start: '18:00', end: '19:00', cat: 'salud', repeat: 'weekly', reminders: [], location: '', notes: '' }
+  );
+  S.tasks.push(
+    { id: uid(), demo: true, text: 'Ejemplo · Explorar Calendario Pro', done: false, date: t, time: '', remind: null, priority: 1, cat: '', notes: '' },
+    { id: uid(), demo: true, text: 'Ejemplo · Escribir mis primeras notas', done: false, date: '', time: '', remind: null, priority: 0, cat: '', notes: '' }
+  );
+  S.notes.push({
+    id: uid(), demo: true, pinned: true, created: Date.now(), updated: Date.now(),
+    title: 'Bienvenido a Calendario Pro',
+    body: 'Esta es una nota de ejemplo. Puedes borrarla cuando quieras.\n\nCÓMO USARLO\n• Escribe en la barra de arriba: «Dentista mañana 4pm» o «Reunión el viernes 10am cada semana».\n• Haz clic en un día para crear un evento. Arrastra un evento para moverlo a otro día.\n• Cada evento puede tener varios recordatorios (5 min, 1 hora, 1 día antes…).\n• Activa las notificaciones del navegador para que te avise aunque estés en otra pestaña.\n• Los recordatorios funcionan mientras esta página esté abierta (puede estar minimizada).\n\nATAJOS\nN nuevo evento · T hoy · M / S / D / A vistas · ← → navegar · / buscar · Q escribir rápido\n\nEN OTRO COMPUTADOR\nAjustes → «Exportar copia» y luego «Importar» en el otro equipo. O sube esta carpeta a un hosting gratuito (GitHub Pages, Netlify) y ábrela desde cualquier lugar.\n\nLos eventos, tareas y notas marcados como «Ejemplo» se quitan desde Ajustes → «Quitar ejemplos».'
+  });
+}
+
+/* estado de la interfaz (no se guarda) */
+const ui = { section: 'calendar', cursor: today(), mini: today().slice(0, 8) + '01', taskFilter: 'pending', noteId: null, noteQuery: '', noteOpen: false, tgTop: null, lastDay: today() };
+const narrow = () => window.innerWidth < 700;
+const setCursor = d => { ui.cursor = d; ui.mini = d.slice(0, 8) + '01'; };
+
+/* =====================================================================
+   Formatos
+   ===================================================================== */
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  if (!S.settings.hour12) return `${pad(h)}:${pad(m)}`;
+  return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+const fmtHour = h => S.settings.hour12 ? (h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`) : `${pad(h)}:00`;
+const fmtLong = s => { const d = parseDate(s); return `${DAY_L[d.getDay()]}, ${d.getDate()} de ${MON_L[d.getMonth()]}`; };
+const fmtShort = s => { const d = parseDate(s); return `${DAY_S[d.getDay()]} ${d.getDate()} ${MON_S[d.getMonth()]}`; };
+function relDay(s) { const n = diffDays(today(), s); return n === 0 ? 'Hoy' : n === 1 ? 'Mañana' : n === -1 ? 'Ayer' : fmtShort(s); }
+function human(min) { min = Math.abs(Math.round(min)); if (min < 60) return `${min} min`; if (min < 1440) { const h = Math.floor(min / 60), m = min % 60; return m ? `${h} h ${m} min` : `${h} h`; } const d = Math.round(min / 1440); return d === 1 ? '1 día' : `${d} días`; }
+function remLabel(m) {
+  if (m === 0) return 'En el momento';
+  if (m < 60) return `${m} minutos antes`;
+  if (m === 60) return '1 hora antes';
+  if (m < 1440) return `${m / 60} horas antes`;
+  if (m === 1440) return '1 día antes';
+  if (m % 10080 === 0) return m === 10080 ? '1 semana antes' : `${m / 10080} semanas antes`;
+  if (m % 1440 === 0) return `${m / 1440} días antes`;
+  return `${m} minutos antes`;
+}
+const startOfWeek = s => { const d = parseDate(s); const diff = (d.getDay() - S.settings.weekStart + 7) % 7; return addDays(s, -diff); };
+const catOf = id => S.categories.find(c => c.id === id) || { id: '', name: 'Sin categoría', color: '#64748b' };
+const rgba = (hex, a) => { const n = parseInt(hex.replace('#', ''), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+const itemColor = it => it.type === 'event' ? catOf(it.ev.cat).color : (it.task.cat ? catOf(it.task.cat).color : '#64748b');
+const cstyle = c => `--c:${c};--cb:${rgba(c, .17)}`;
+
+/* =====================================================================
+   Eventos: recurrencia y colección por rango
+   ===================================================================== */
+const eventSpan = ev => (ev.endDate && ev.endDate > ev.date) ? diffDays(ev.date, ev.endDate) : 0;
+
+/* Fechas (inicio) de las apariciones de un evento cuyo tramo toca [from, to] */
+function occurrences(ev, from, to) {
+  const span = eventSpan(ev), lo = addDays(from, -span), res = [], ex = ev.exceptions || [];
+  const push = d => { if (d >= ev.date && d >= lo && d <= to && !ex.includes(d) && (!ev.until || d <= ev.until)) res.push(d); };
+  const r = ev.repeat || 'none';
+  if (r === 'none') { push(ev.date); return res; }
+  if (r === 'daily' || r === 'weekdays' || r === 'weekly' || r === 'biweekly') {
+    const step = (r === 'daily' || r === 'weekdays') ? 1 : r === 'weekly' ? 7 : 14;
+    let d = ev.date;
+    if (lo > d) d = addDays(d, Math.floor(diffDays(d, lo) / step) * step);
+    for (; d <= to; d = addDays(d, step)) {
+      if (r === 'weekdays') { const w = parseDate(d).getDay(); if (w === 0 || w === 6) continue; }
+      push(d);
+    }
+    return res;
+  }
+  const sd = parseDate(ev.date), step = r === 'monthly' ? 1 : 12, ld = parseDate(lo);
+  let k = Math.max(0, Math.floor(((ld.getFullYear() - sd.getFullYear()) * 12 + ld.getMonth() - sd.getMonth()) / step) - 1);
+  for (; ; k++) {
+    const total = sd.getMonth() + k * step;
+    const y = sd.getFullYear() + Math.floor(total / 12), m = total % 12;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const d = fmtDate(new Date(y, m, Math.min(sd.getDate(), dim)));
+    if (d > to || k > 20000) break;
+    push(d);
+  }
+  return res;
+}
+
+/* Mapa fecha → elementos (eventos y tareas) entre from y to (inclusive) */
+function collect(from, to, opts = {}) {
+  const map = {}, add = (d, it) => { (map[d] || (map[d] = [])).push(it); };
+  const hidden = S.settings.hiddenCats;
+  for (const ev of S.events) {
+    if (hidden.includes(ev.cat)) continue;
+    const span = eventSpan(ev);
+    for (const occ of occurrences(ev, from, to)) {
+      for (let i = 0; i <= span; i++) {
+        const d = addDays(occ, i);
+        if (d < from || d > to) continue;
+        add(d, { type: 'event', ev, occ, day: d, i, span, band: !!ev.allDay || span > 0 });
+      }
+    }
+  }
+  if (opts.tasks !== false && S.settings.showTasks) {
+    for (const t of S.tasks) {
+      if (!t.date || t.date < from || t.date > to) continue;
+      if (t.cat && hidden.includes(t.cat)) continue;
+      add(t.date, { type: 'task', task: t, day: t.date, i: 0, span: 0, band: !t.time });
+    }
+  }
+  const key = it => it.band ? (it.type === 'event' ? -2 : -1) : toMin(it.type === 'event' ? (it.ev.start || '00:00') : it.task.time);
+  for (const d in map) map[d].sort((a, b) => key(a) - key(b) || (a.type === 'event' ? a.ev.title : a.task.text).localeCompare(b.type === 'event' ? b.ev.title : b.task.text));
+  return map;
+}
+
+const itemTitle = it => it.type === 'event' ? it.ev.title : it.task.text;
+
+/* =====================================================================
+   Interpretación de texto rápido («Dentista mañana 4pm cada semana»)
+   ===================================================================== */
+function parseQuick(input, opts = {}) {
+  let orig = ' ' + String(input).replace(/\s+/g, ' ').trim().replace(/\b([ap])\.\s?m\.?/gi, '$1m') + ' ';
+  let low = norm(orig);
+  if (low.length !== orig.length) low = orig.toLowerCase();
+  const cut = m => { const i = m.index, l = m[0].length; orig = orig.slice(0, i) + ' ' + orig.slice(i + l); low = low.slice(0, i) + ' ' + low.slice(i + l); };
+  const find = re => re.exec(low);
+  const take = re => { const m = find(re); if (m) cut(m); return m; };
+  const r = { kind: opts.task ? 'task' : 'event', title: '', date: null, time: null, repeat: 'none', remind: null, cat: null };
+  const now = new Date(), t0 = fmtDate(now);
+  let m, wdRepeat = null, meridiem = false, lead0 = false;
+
+  if (take(/^\s*(?:tarea|todo|pendiente)\s*[:\-]\s*/) || take(/^\s*tarea\s+/)) r.kind = 'task';
+  if ((m = find(/\s#([a-z0-9_]+)/))) { const c = S.categories.find(c => norm(c.name).startsWith(m[1])); if (c) { r.cat = c.id; cut(m); } }
+  take(/\b(?:recuerdame|recordarme|avisame|avisarme|agendame|agendar)(?:\s+que)?\b/);
+  take(/\bcon\s+recordatorio\b/);
+
+  if ((m = take(/\b(?:con\s+)?(\d+)\s*(minutos?|mins?|horas?|hrs?|h|dias?)\s+(?:de\s+)?(?:antes|anticipacion)\b/))) {
+    const n = +m[1], u = m[2]; r.remind = /^d/.test(u) ? n * 1440 : /^h/.test(u) ? n * 60 : n;
+  }
+
+  if (take(/\b(?:de lunes a viernes|entre semana|dias laborales|dias habiles)\b/)) r.repeat = 'weekdays';
+  else if (take(/\b(?:cada 2 semanas|cada dos semanas|quincenal(?:mente)?|cada quincena)\b/)) r.repeat = 'biweekly';
+  else if ((m = take(/\b(?:cada|todos los|todas las)\s+(dias?|semanas?|mes(?:es)?|anos?|lunes|martes|miercoles|jueves|viernes|sabados?|domingos?)\b/))) {
+    const u = m[1];
+    if (/^dia/.test(u)) r.repeat = 'daily'; else if (/^semana/.test(u)) r.repeat = 'weekly';
+    else if (/^mes/.test(u)) r.repeat = 'monthly'; else if (/^ano/.test(u)) r.repeat = 'yearly';
+    else { r.repeat = 'weekly'; wdRepeat = WDN.findIndex(w => u.startsWith(w)); }
+  } else if ((m = take(/\b(diariamente|diario|semanalmente|semanal|mensualmente|mensual|anualmente|anual)\b/))) {
+    r.repeat = /^d/.test(m[1]) ? 'daily' : /^s/.test(m[1]) ? 'weekly' : /^me/.test(m[1]) ? 'monthly' : 'yearly';
+  }
+
+  if ((m = take(/\ben\s+(\d+)\s*(minutos?|mins?|horas?|hrs?|dias?|semanas?)\b/))) {
+    const n = +m[1], u = m[2], d = new Date(now);
+    if (/^min/.test(u) || /^h/.test(u)) {
+      if (/^min/.test(u)) d.setMinutes(d.getMinutes() + n); else d.setHours(d.getHours() + n);
+      r.date = fmtDate(d); r.time = `${pad(d.getHours())}:${pad(d.getMinutes())}`; meridiem = true;
+    } else r.date = addDays(t0, /^d/.test(u) ? n : n * 7);
+  }
+
+  const setTime = (hs, mi, suf) => {
+    let h = +hs; suf = suf || ''; lead0 = hs.length === 2 && hs[0] === '0';
+    if (h > 23) return false;
+    if (/noche/.test(suf) && h === 12) h = 0;
+    else if (/pm|tarde|noche/.test(suf) && h < 12) h += 12;
+    else if (/am|manana|madrugada/.test(suf) && h === 12) h = 0;
+    r.time = `${pad(h)}:${pad(+mi || 0)}`; meridiem = meridiem || !!suf || h > 12;
+    return true;
+  };
+  const SUF = String.raw`(?:\s*(am|pm|de la manana|de la tarde|de la noche|de la madrugada))?`;
+  if (r.time == null) {
+    if ((m = find(new RegExp(String.raw`\ba\s+las?\s+(\d{1,2})(?:[:h](\d{2}))?(?!\d)` + SUF))) && setTime(m[1], m[2], m[3])) cut(m);
+    else if ((m = find(new RegExp(String.raw`\b(\d{1,2})[:h](\d{2})(?!\d)` + SUF))) && setTime(m[1], m[2], m[3])) cut(m);
+    else if ((m = find(/\b(\d{1,2})\s*(am|pm|de la manana|de la tarde|de la noche)(?![a-z])/)) && setTime(m[1], 0, m[2])) cut(m);
+    else if ((m = take(/\bmediodia\b/))) { r.time = '12:00'; meridiem = true; }
+    else if ((m = take(/\bmedianoche\b/))) { r.time = '00:00'; meridiem = true; }
+  }
+
+  let period = null;
+  if ((m = take(/\besta\s+(manana|tarde|noche)\b/))) { period = m[1]; if (!r.date) r.date = t0; }
+  else if ((m = take(/\b(?:por|de|en)\s+la\s+(manana|tarde|noche)\b/))) period = m[1];
+  if (r.time != null && !meridiem) {
+    const h = +r.time.slice(0, 2);
+    if ((period === 'tarde' || period === 'noche') && h < 12) r.time = plus(r.time, 720);
+    else if (!period && !lead0 && h >= 1 && h <= 6) r.time = plus(r.time, 720);
+  } else if (r.time == null && period) r.time = { manana: '09:00', tarde: '15:00', noche: '20:00' }[period];
+
+  if (take(/\bpasado\s+manana\b/)) r.date = addDays(t0, 2);
+  else if (take(/\bmanana\b/)) r.date = addDays(t0, 1);
+  else if (take(/\bhoy\b/)) r.date = t0;
+
+  if ((m = take(/\b(?:(?:el|este|proximo|siguiente)\s+)*(lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b/))) {
+    if (!r.date) { const wd = WDN.indexOf(m[1]); let add = (wd - now.getDay() + 7) % 7; if (add === 0) add = 7; r.date = addDays(t0, add); }
+  }
+  if (wdRepeat != null && wdRepeat >= 0 && !r.date) {
+    let add = (wdRepeat - now.getDay() + 7) % 7;
+    if (add === 0 && r.time && toMin(r.time) <= nowMin()) add = 7;
+    r.date = addDays(t0, add);
+  }
+
+  if (!r.date) {
+    if ((m = find(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/)) && +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12) {
+      const y = m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : now.getFullYear();
+      let d = new Date(y, +m[2] - 1, +m[1]); if (!m[3] && fmtDate(d) < t0) d = new Date(y + 1, +m[2] - 1, +m[1]);
+      r.date = fmtDate(d); cut(m);
+    } else if ((m = find(/\b(?:el\s+)?(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+(?:de|del)\s+(\d{4}))?\b/)) && +m[1] >= 1 && +m[1] <= 31) {
+      const mo = MON_L.findIndex(x => x.startsWith(m[2].slice(0, 3))), y = m[3] ? +m[3] : now.getFullYear();
+      let d = new Date(y, mo, +m[1]); if (!m[3] && fmtDate(d) < t0) d = new Date(y + 1, mo, +m[1]);
+      r.date = fmtDate(d); cut(m);
+    } else if ((m = find(/\bel\s+(\d{1,2})\b(?!\s*[:h\/])/)) && +m[1] >= 1 && +m[1] <= 31) {
+      let d = new Date(now.getFullYear(), now.getMonth(), +m[1]);
+      if (fmtDate(d) < t0) d = new Date(now.getFullYear(), now.getMonth() + 1, +m[1]);
+      r.date = fmtDate(d); cut(m);
+    }
+  }
+
+  let t = orig.replace(/\s+/g, ' ').trim();
+  t = t.replace(/^(?:recu[eé]rdame|recordarme|agendar|agenda|programar|programa|anota|apunta|apuntar|a[ñn]adir|crear|nueva? (?:cita|evento|tarea))\s+(?:que\s+)?/i, '');
+  let prev;
+  do {
+    prev = t;
+    t = t.replace(/^(?:a|para|que|y|de|del|en|por)\s+/i, '').replace(/\s+(?:el|la|los|las|a|para|de|del|en|por|que|y|con|hoy)$/i, '').replace(/^[\s,.;:\-–]+|[\s,.;:\-–]+$/g, '');
+  } while (t !== prev);
+  r.title = t ? cap(t) : '';
+  return r;
+}
+
+/* completa lo que falta (fecha por defecto, recordatorios) para crear un evento desde texto rápido */
+function quickEventData(p) {
+  let date = p.date;
+  if (!date) date = p.time ? (toMin(p.time) > nowMin() ? today() : addDays(today(), 1)) : ui.cursor;
+  const allDay = !p.time;
+  const rems = p.remind != null ? [p.remind] : defaultRems(allDay);
+  return { title: p.title, date, endDate: date, allDay, start: p.time || '', end: p.time ? plus(p.time, 60) : '', cat: p.cat || S.settings.lastCat || S.categories[0].id, repeat: p.repeat || 'none', until: '', reminders: rems, location: '', notes: '' };
+}
+const defaultRems = allDay => S.settings.defaultReminder == null ? [] : (allDay ? [0] : [S.settings.defaultReminder]);
+
+function previewHTML(p, isTask) {
+  if (!p.title && !p.date && !p.time) return '';
+  const out = [];
+  if (!p.title) out.push(`<span class="qp warn">Falta el título</span>`);
+  if (isTask) {
+    out.push(`<span class="qp t">${ic('tasks', 'sm')} Tarea</span>`);
+    if (p.date) out.push(`<span class="qp">${ic('cal', 'sm')} ${esc(fmtLong(p.date))}</span>`);
+    if (p.time) out.push(`<span class="qp">${ic('clock', 'sm')} ${fmtTime(p.time)}</span>`);
+  } else {
+    const d = quickEventData(p);
+    out.push(`<span class="qp">${ic('cal', 'sm')} ${esc(fmtLong(d.date))}</span>`);
+    out.push(`<span class="qp">${ic('clock', 'sm')} ${p.time ? fmtTime(p.time) + ' – ' + fmtTime(d.end) : 'Todo el día'}</span>`);
+    if (d.repeat !== 'none') out.push(`<span class="qp">${ic('repeat', 'sm')} ${REPEAT_TXT[d.repeat]}</span>`);
+    if (d.reminders.length) out.push(`<span class="qp">${ic('bell', 'sm')} ${esc(d.reminders.map(remLabel).join(', '))}</span>`);
+    out.push(`<span class="qp t">${esc(catOf(d.cat).name)}</span>`);
+    out.push(`<span class="hint" style="align-self:center">Enter guarda · Shift+Enter abre el formulario</span>`);
+  }
+  if (isTask && p.remind != null) out.push(`<span class="qp">${ic('bell', 'sm')} ${esc(remLabel(p.remind))}</span>`);
+  return out.join('');
+}
+
+/* =====================================================================
+   Vistas
+   ===================================================================== */
+function chipHTML(it) {
+  const c = itemColor(it);
+  if (it.type === 'event') {
+    const ev = it.ev, tm = (!it.band && ev.start) ? `<span class="tm">${fmtTime(ev.start)}</span>` : '';
+    return `<div class="chip${it.i > 0 ? ' cont' : ''}" draggable="true" data-act="open-event" data-id="${ev.id}" data-occ="${it.occ}" style="${cstyle(c)}" title="${esc(ev.title)}">${tm}${esc(ev.title)}</div>`;
+  }
+  const t = it.task;
+  return `<div class="chip task${t.done ? ' done' : ''}" draggable="true" data-act="open-task" data-id="${t.id}" style="${cstyle(c)}" title="${esc(t.text)}"><span class="tk" data-act="toggle-task" data-id="${t.id}"></span>${t.time ? `<span class="tm">${fmtTime(t.time)}</span>` : ''}${esc(t.text)}</div>`;
+}
+
+function timeLabel(it) {
+  if (it.type === 'task') return it.task.time ? fmtTime(it.task.time) : 'Tarea';
+  const ev = it.ev;
+  if (ev.allDay) return it.span ? `Día ${it.i + 1} de ${it.span + 1}` : 'Todo el día';
+  if (it.span) return it.i === 0 ? `Desde ${fmtTime(ev.start)}` : it.i === it.span ? `Hasta ${fmtTime(ev.end)}` : 'Todo el día';
+  return `${fmtTime(ev.start)}${ev.end ? ' – ' + fmtTime(ev.end) : ''}`;
+}
+
+function rowHTML(it) {
+  const c = itemColor(it);
+  if (it.type === 'event') {
+    const ev = it.ev, cat = catOf(ev.cat);
+    const sub = [cat.name, ev.location ? esc(ev.location) : '', ev.reminders && ev.reminders.length ? '🔔' : ''].filter(Boolean).join(' · ');
+    return `<div class="row-item" data-act="open-event" data-id="${ev.id}" data-occ="${it.occ}" style="${cstyle(c)}"><span class="bar"></span><div class="rt">${timeLabel(it)}</div><div class="rb"><div class="rtitle">${esc(ev.title)}${ev.repeat && ev.repeat !== 'none' ? ' ' + ic('repeat', 'sm') : ''}</div><div class="rsub">${sub}</div></div></div>`;
+  }
+  const t = it.task;
+  return `<div class="row-item" data-act="open-task" data-id="${t.id}" style="${cstyle(c)}"><span class="bar"></span><div class="rt">${timeLabel(it)}</div><button class="cb${t.done ? ' on' : ''}" data-act="toggle-task" data-id="${t.id}" aria-label="Completar">${ic('check')}</button><div class="rb"><div class="rtitle${t.done ? ' done' : ''}">${esc(t.text)}</div></div></div>`;
+}
+
+function viewMonth() {
+  const first = ui.cursor.slice(0, 8) + '01', gs = startOfWeek(first);
+  let days = Array.from({ length: 42 }, (_, i) => addDays(gs, i));
+  if (parseDate(days[35]).getMonth() !== parseDate(first).getMonth()) days = days.slice(0, 35);
+  const map = collect(days[0], days[days.length - 1]);
+  const curM = parseDate(first).getMonth(), t0 = today(), nr = days.length / 7;
+  const isN = narrow(), max = isN ? 0 : 8;
+  const dow = Array.from({ length: 7 }, (_, i) => DAY_S[(S.settings.weekStart + i) % 7]);
+  let h = `<div class="month"><div class="m-dow">${dow.map(x => `<div>${isN ? x.charAt(0) : x}</div>`).join('')}</div><div class="m-grid" style="grid-template-rows:repeat(${nr},minmax(0,1fr))">`;
+  for (const d of days) {
+    const dt = parseDate(d), items = map[d] || [], shown = items.slice(0, max);
+    const label = dt.getDate() === 1 ? `${dt.getDate()} ${MON_S[dt.getMonth()]}` : dt.getDate();
+    h += `<div class="cell${dt.getMonth() !== curM ? ' other' : ''}${d === t0 ? ' today' : ''}${d === ui.cursor ? ' sel' : ''}" data-act="cell" data-date="${d}" data-n="${items.length}">
+      <div class="cell-head"><span class="dnum" data-act="goto-day" data-date="${d}">${label}</span></div>
+      <div class="chips">${shown.map(chipHTML).join('')}</div>
+      ${!isN && items.length ? `<div class="more" hidden data-act="goto-day" data-date="${d}"></div>` : ''}
+      ${isN && items.length ? `<div class="dots">${items.slice(0, 4).map(it => `<u style="--c:${itemColor(it)}"></u>`).join('')}</div>` : ''}
+    </div>`;
+  }
+  h += '</div></div>';
+  if (isN) {
+    const list = (map[ui.cursor] || (ui.cursor < days[0] || ui.cursor > days[days.length - 1] ? [] : []));
+    h += `<div class="ag-day"><div class="ag-h${ui.cursor === t0 ? ' today' : ''}">${cap(fmtLong(ui.cursor))}</div>${list.length ? `<div class="ag-list">${list.map(rowHTML).join('')}</div>` : `<div class="empty" style="padding:24px">Nada este día</div>`}</div>`;
+  }
+  return h;
+}
+
+function layoutColumns(list) {
+  list.sort((a, b) => a.s - b.s || b.e - a.e);
+  let group = [], groupEnd = -1, colEnds = [];
+  const flush = () => { const n = colEnds.length; group.forEach(x => x.cols = n); group = []; colEnds = []; groupEnd = -1; };
+  for (const x of list) {
+    if (group.length && x.s >= groupEnd) flush();
+    let c = colEnds.findIndex(end => end <= x.s);
+    if (c < 0) { c = colEnds.length; colEnds.push(0); }
+    colEnds[c] = x.e; x.col = c; group.push(x); groupEnd = Math.max(groupEnd, x.e);
+  }
+  flush();
+}
+
+function blocksHTML(items) {
+  const list = items.filter(it => !it.band).map(it => {
+    const st = it.type === 'event' ? it.ev.start : it.task.time;
+    const s = toMin(st);
+    let e = it.type === 'event' ? (it.ev.end ? toMin(it.ev.end) : s + 60) : s + 30;
+    if (e <= s) e = Math.min(s + 45, 1440);
+    return { it, s, e };
+  });
+  layoutColumns(list);
+  return list.map(x => {
+    const it = x.it, c = itemColor(it), top = x.s / 60 * HH, hgt = Math.max((x.e - x.s) / 60 * HH - 2, 20);
+    const left = x.col / x.cols * 100, w = 100 / x.cols;
+    const st = `${cstyle(c)};top:${top}px;height:${hgt}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)`;
+    if (it.type === 'event') {
+      const ev = it.ev;
+      return `<div class="blk" data-act="open-event" data-id="${ev.id}" data-occ="${it.occ}" style="${st}"><b>${esc(ev.title)}</b>${hgt > 34 ? `<small>${fmtTime(ev.start)}${ev.end ? ' – ' + fmtTime(ev.end) : ''}${ev.location ? ' · ' + esc(ev.location) : ''}</small>` : ''}</div>`;
+    }
+    const t = it.task;
+    return `<div class="blk${t.done ? ' done' : ''}" data-act="open-task" data-id="${t.id}" style="${st}"><b>☐ ${esc(t.text)}</b></div>`;
+  }).join('');
+}
+
+function viewTime(days) {
+  const map = collect(days[0], days[days.length - 1]), t0 = today(), n = days.length;
+  let h = `<div class="tg"><div class="tg-scroll" id="tgScroll" style="--n:${n}">`;
+  h += `<div class="tg-row tg-head"><div></div>${days.map(d => { const dt = parseDate(d); return `<div class="tg-day${d === t0 ? ' today' : ''}" data-act="goto-day" data-date="${d}"><span class="dw">${DAY_S[dt.getDay()]}</span><span class="dn">${dt.getDate()}</span></div>`; }).join('')}</div>`;
+  h += `<div class="tg-row tg-allday"><div class="gut">todo el día</div>${days.map(d => `<div class="ad-col" data-act="new-event-day" data-date="${d}">${(map[d] || []).filter(it => it.band).map(chipHTML).join('')}</div>`).join('')}</div>`;
+  h += `<div class="tg-row tg-grid"><div class="gut">${Array.from({ length: 23 }, (_, i) => `<span class="hl" style="top:${(i + 1) * HH}px">${fmtHour(i + 1)}</span>`).join('')}</div>`;
+  h += days.map(d => `<div class="tg-col${d === t0 ? ' today' : ''}" data-act="slot" data-date="${d}">${blocksHTML(map[d] || [])}${d === t0 ? `<div class="nowline" id="nowline" style="top:${nowMin() / 60 * HH}px"></div>` : ''}</div>`).join('');
+  h += '</div></div></div>';
+  return h;
+}
+
+function viewAgenda() {
+  const from = ui.cursor, to = addDays(from, 29), map = collect(from, to), t0 = today();
+  const keys = Object.keys(map).sort();
+  if (!keys.length) return `<div class="empty">${ic('cal')}<div><b>Nada programado</b> del ${fmtShort(from)} al ${fmtShort(to)}</div><p>Escribe arriba, por ejemplo «Llamar al médico mañana 9am».</p></div>`;
+  return `<div style="padding-bottom:20px">${keys.map(d => `<div class="ag-day"><div class="ag-h${d === t0 ? ' today' : ''}">${cap(relDay(d) === fmtShort(d) ? fmtLong(d) : relDay(d))} <small>${relDay(d) === fmtShort(d) ? '' : fmtLong(d)}</small></div><div class="ag-list">${map[d].map(rowHTML).join('')}</div></div>`).join('')}</div>`;
+}
+
+function calTitle() {
+  const v = S.settings.view, d = parseDate(ui.cursor);
+  if (v === 'month') return `${cap(MON_L[d.getMonth()])} ${d.getFullYear()}`;
+  if (v === 'day') return `${cap(DAY_L[d.getDay()])}, ${d.getDate()} de ${MON_L[d.getMonth()]} ${d.getFullYear()}`;
+  const a = v === 'week' ? startOfWeek(ui.cursor) : ui.cursor, b = addDays(a, v === 'week' ? 6 : 29);
+  const da = parseDate(a), db = parseDate(b);
+  return `${da.getDate()}${da.getMonth() !== db.getMonth() ? ' ' + MON_S[da.getMonth()] : ''} – ${db.getDate()} ${MON_S[db.getMonth()]} ${db.getFullYear()}`;
+}
+
+function viewCalendar() {
+  const v = S.settings.view;
+  if (v === 'month') return viewMonth();
+  if (v === 'week') { const s = startOfWeek(ui.cursor); return viewTime(Array.from({ length: 7 }, (_, i) => addDays(s, i))); }
+  if (v === 'day') return viewTime([ui.cursor]);
+  return viewAgenda();
+}
+
+/* tareas */
+const taskSort = (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.time || '99').localeCompare(b.time || '99') || (b.priority || 0) - (a.priority || 0);
+function taskRowHTML(t) {
+  const t0 = today(), over = !t.done && t.date && (t.date < t0 || (t.date === t0 && t.time && toMin(t.time) < nowMin()));
+  const chips = [];
+  if (t.date) chips.push(`<span class="tc${over ? ' over' : ''}">${ic('cal', 'sm')} ${relDay(t.date)}${t.time ? ' · ' + fmtTime(t.time) : ''}</span>`);
+  if (t.remind != null && t.date) chips.push(`<span class="tc">${ic('bell', 'sm')} ${remLabel(t.remind)}</span>`);
+  if (t.priority) chips.push(`<span class="tc p${t.priority}">${ic('flag', 'sm')} ${t.priority === 2 ? 'Alta' : 'Media'}</span>`);
+  if (t.cat) chips.push(`<span class="tc" style="color:${catOf(t.cat).color}">● ${esc(catOf(t.cat).name)}</span>`);
+  return `<div class="row-item" data-act="open-task" data-id="${t.id}" style="${cstyle(t.cat ? catOf(t.cat).color : '#64748b')}"><button class="cb${t.done ? ' on' : ''}" data-act="toggle-task" data-id="${t.id}" aria-label="Completar tarea">${ic('check')}</button><div class="rb"><div class="rtitle${t.done ? ' done' : ''}">${esc(t.text)}</div>${chips.length ? `<div class="tchips">${chips.join('')}</div>` : ''}</div><button class="icon-btn sm" data-act="task-del" data-id="${t.id}" aria-label="Eliminar">${ic('trash', 'sm')}</button></div>`;
+}
+function viewTasks() {
+  const t0 = today(), f = ui.taskFilter;
+  const pend = S.tasks.filter(t => !t.done).sort(taskSort), done = S.tasks.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+  let h = '<div class="pad">';
+  const group = (title, list, cls = '') => list.length ? `<div class="task-h ${cls}">${title} · ${list.length}</div><div class="ag-list">${list.map(taskRowHTML).join('')}</div>` : '';
+  if (f === 'done') h += done.length ? group('Completadas', done) : `<div class="empty">${ic('tasks')}<div>Aún no has completado tareas</div></div>`;
+  else {
+    const over = pend.filter(t => t.date && t.date < t0), td = pend.filter(t => t.date === t0), up = pend.filter(t => t.date > t0), nod = pend.filter(t => !t.date);
+    h += group('Vencidas', over, 'over') + group('Hoy', td) + group('Próximas', up) + group('Sin fecha', nod);
+    if (!pend.length) h += `<div class="empty">${ic('tasks')}<div><b>Todo al día</b></div><p>Agrega una tarea arriba.</p></div>`;
+    if (f === 'all') h += group('Completadas', done);
+  }
+  return h + '</div>';
+}
+
+/* notas */
+const noteSort = (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updated - a.updated;
+function noteList() { const q = norm(ui.noteQuery || ''); return S.notes.filter(n => !q || norm(n.title + ' ' + n.body).includes(q)).sort(noteSort); }
+function noteListHTML(list) {
+  if (!list.length) return `<div class="empty" style="padding:30px 10px">${ui.noteQuery ? 'Sin resultados' : 'No hay notas'}</div>`;
+  return list.map(n => {
+    const first = (n.body || '').split('\n').find(l => l.trim()) || 'Sin contenido';
+    const dt = new Date(n.updated);
+    return `<div class="n-item${n.id === ui.noteId ? ' on' : ''}" data-act="select-note" data-id="${n.id}"><b>${n.pinned ? ic('pin', 'sm') : ''}<span>${esc(n.title || 'Sin título')}</span></b><p>${esc(first)}</p><small>${dt.getDate()} ${MON_S[dt.getMonth()]}</small></div>`;
+  }).join('');
+}
+function noteStatus(n) { const w = (n.body.trim().match(/\S+/g) || []).length; return `${w} palabra${w === 1 ? '' : 's'} · Guardado automáticamente`; }
+function viewNotes() {
+  const list = noteList();
+  if (!S.notes.some(n => n.id === ui.noteId)) ui.noteId = list[0] ? list[0].id : null;
+  const n = S.notes.find(x => x.id === ui.noteId);
+  const ed = n ? `<div class="n-bar"><button class="icon-btn back-btn" data-act="note-back" aria-label="Volver">${ic('left')}</button><span id="noteStat">${noteStatus(n)}</span><span class="spacer"></span><button class="icon-btn" data-act="note-pin" title="${n.pinned ? 'Desfijar' : 'Fijar'}" style="${n.pinned ? 'color:var(--accent)' : ''}">${ic('pin')}</button><button class="icon-btn" data-act="note-copy" title="Copiar texto">${ic('copy')}</button><button class="icon-btn" data-act="note-del" title="Eliminar">${ic('trash')}</button></div><input id="noteTitle" placeholder="Título" value="${esc(n.title)}" maxlength="200"><textarea id="noteBody" placeholder="Escribe lo que quieras…">${esc(n.body)}</textarea>`
+    : `<div class="empty">${ic('note')}<div><b>Sin notas todavía</b></div><p><button class="btn primary" data-act="new-note">${ic('plus')} Nueva nota</button></p></div>`;
+  return `<div class="notes${ui.noteOpen ? ' show-editor' : ''}"><div class="n-side"><div class="n-tools"><input id="noteSearch" type="search" placeholder="Buscar en notas" value="${esc(ui.noteQuery)}"><button class="btn primary" data-act="new-note" aria-label="Nueva nota">${ic('plus')}</button></div><div id="nList">${noteListHTML(list)}</div></div><div class="n-main">${ed}</div></div>`;
+}
+
+/* barra lateral */
+function renderSidebar() {
+  const md = parseDate(ui.mini), gs = startOfWeek(ui.mini), days = Array.from({ length: 42 }, (_, i) => addDays(gs, i));
+  const map = collect(days[0], days[41]), t0 = today();
+  const dow = Array.from({ length: 7 }, (_, i) => DAY_S[(S.settings.weekStart + i) % 7].charAt(0).toUpperCase());
+  $('#miniCal').innerHTML = `<div class="mc-head"><b>${cap(MON_L[md.getMonth()])} ${md.getFullYear()}</b><span><button class="icon-btn sm" data-act="mini-prev" aria-label="Mes anterior">${ic('left', 'sm')}</button><button class="icon-btn sm" data-act="mini-next" aria-label="Mes siguiente">${ic('right', 'sm')}</button></span></div>
+    <div class="mc-grid">${dow.map(l => `<i>${l}</i>`).join('')}${days.map(d => { const dd = parseDate(d); return `<button class="mc-day${dd.getMonth() !== md.getMonth() ? ' other' : ''}${d === t0 ? ' today' : ''}${d === ui.cursor ? ' sel' : ''}" data-act="mini-pick" data-date="${d}">${dd.getDate()}${map[d] ? '<u></u>' : ''}</button>`; }).join('')}</div>`;
+
+  const now = Date.now(), up = [], m2 = collect(t0, addDays(t0, 13));
+  for (const d of Object.keys(m2).sort()) for (const it of m2[d]) {
+    if (it.type === 'task' && it.task.done) continue;
+    if (d === t0 && !it.band) { const en = it.type === 'event' ? (it.ev.end || it.ev.start) : it.task.time; if (itemStartMs(d, en) < now) continue; }
+    if (it.type === 'event' && it.i > 0) continue;
+    up.push(it);
+  }
+  $('#upcoming').innerHTML = up.length ? up.slice(0, 5).map(it => `<div class="up-item" data-act="${it.type === 'event' ? 'open-event' : 'open-task'}" data-id="${it.type === 'event' ? it.ev.id : it.task.id}" data-occ="${it.occ || ''}" style="--c:${itemColor(it)}"><span class="up-dot"></span><div style="min-width:0"><div class="up-t">${esc(itemTitle(it))}</div><div class="up-s">${relDay(it.day)}${it.band ? '' : ' · ' + fmtTime(it.type === 'event' ? it.ev.start : it.task.time)}</div></div></div>`).join('') : '<div class="empty-s">Nada en los próximos 14 días</div>';
+
+  $('#cats').innerHTML = S.categories.map(c => `<div class="cat-row${S.settings.hiddenCats.includes(c.id) ? ' off' : ''}" data-act="toggle-cat" data-id="${c.id}" style="--c:${c.color}"><span class="sw"></span><span>${esc(c.name)}</span></div>`).join('')
+    + `<div class="cat-row${S.settings.showTasks ? '' : ' off'}" data-act="toggle-showtasks" style="--c:#64748b"><span class="sw"></span><span>Tareas en el calendario</span></div>`;
+
+  const lb = S.settings.lastBackup, days2 = lb ? Math.floor((Date.now() - lb) / DAY_MS) : null;
+  const total = S.events.length + S.tasks.length + S.notes.length;
+  $('#sbFoot').innerHTML = `${installEvt ? `<button class="btn" data-act="install">${ic('down', 'sm')} Instalar como app</button>` : ''}
+    <div>${lb ? `Última copia: ${days2 === 0 ? 'hoy' : days2 === 1 ? 'ayer' : 'hace ' + days2 + ' días'}` : (total > 3 ? '⚠ Aún no has hecho copia de seguridad' : 'Datos guardados en este navegador')}</div>
+    ${S.sync.on ? `<div id="syncFoot">${syncFootHTML()}</div>` : ''}
+    ${S.phone.on ? `<div id="phoneFoot">${phoneFootHTML()}</div>` : ''}
+    <button class="btn" data-act="export-json">${ic('down', 'sm')} Exportar copia</button>`;
+}
+
+function renderChrome() {
+  applyTheme();
+  const badge = badgeCount();
+  $('#tabs').innerHTML = [['calendar', 'cal', 'Calendario'], ['tasks', 'tasks', 'Tareas'], ['notes', 'note', 'Notas']].map(([s, i, l]) =>
+    `<button class="tab${ui.section === s ? ' on' : ''}" data-act="section" data-s="${s}">${ic(i)}<span class="tl">${l}</span>${s === 'tasks' && badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join('');
+  $('#viewSeg').innerHTML = [['month', 'Mes'], ['week', 'Semana'], ['day', 'Día'], ['agenda', 'Agenda']].map(([v, l]) => `<button class="${S.settings.view === v ? 'on' : ''}" data-act="view" data-v="${v}">${l}</button>`).join('');
+  $('#taskSeg').innerHTML = [['pending', 'Pendientes'], ['done', 'Hechas'], ['all', 'Todas']].map(([v, l]) => `<button class="${ui.taskFilter === v ? 'on' : ''}" data-act="task-filter" data-v="${v}">${l}</button>`).join('');
+  $('#calHead').hidden = ui.section !== 'calendar';
+  $('#taskHead').hidden = ui.section !== 'tasks';
+  $('#fab').hidden = ui.section !== 'calendar';
+  $('#calTitle').textContent = calTitle();
+  renderBanner();
+}
+const badgeCount = () => { const t0 = today(); return S.tasks.filter(t => !t.done && t.date && t.date <= t0).length; };
+
+/* muestra sólo los eventos que caben en cada celda del mes y resume el resto en «+N más» */
+function fitMonth() {
+  $$('.m-grid .cell').forEach(c => {
+    const chips = $$('.chip', c), more = $('.more', c);
+    if (!chips.length) return;
+    chips.forEach(x => x.style.display = '');
+    const total = +c.dataset.n, avail = c.clientHeight - $('.cell-head', c).offsetHeight - 8, step = chips[0].offsetHeight + 2;
+    let k = Math.floor(avail / step);
+    if (total > k) k = Math.max(0, Math.floor((avail - 16) / step));
+    chips.forEach((x, i) => { x.style.display = i < k ? '' : 'none'; });
+    if (more) { more.hidden = total <= k; more.textContent = `+${total - k} más`; }
+  });
+}
+
+function render() {
+  const sc = $('#tgScroll'); if (sc) ui.tgTop = sc.scrollTop;
+  renderChrome();
+  renderSidebar();
+  const v = $('#view');
+  v.innerHTML = ui.section === 'calendar' ? viewCalendar() : ui.section === 'tasks' ? viewTasks() : viewNotes();
+  const sc2 = $('#tgScroll');
+  if (sc2) sc2.scrollTop = ui.tgTop != null ? ui.tgTop : Math.max(0, (Math.max(nowMin() / 60 - 1.5, 6.5)) * HH);
+  fitMonth();
+}
+
+function renderBanner() {
+  const b = $('#banner');
+  const need = 'Notification' in window && Notification.permission === 'default' && S.settings.notify && !sessionStorageGet('nb');
+  b.innerHTML = need ? `<div class="bn">${ic('bell')}<span>Activa las notificaciones para recibir tus recordatorios aunque estés en otra pestaña.</span><button class="btn primary" data-act="enable-notif">Activar</button><button class="btn ghost" data-act="dismiss-banner">Ahora no</button></div>` : '';
+}
+function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+
+/* =====================================================================
+   Tema
+   ===================================================================== */
+const mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : { matches: false, addEventListener() { } };
+const resolvedTheme = () => S.settings.theme === 'auto' ? (mq.matches ? 'dark' : 'light') : S.settings.theme;
+function applyTheme() {
+  const th = resolvedTheme();
+  document.documentElement.dataset.theme = th;
+  const m = $('meta[name=theme-color]'); if (m) m.content = th === 'dark' ? '#161927' : '#4f6bff';
+  $('#themeBtn').innerHTML = ic(th === 'dark' ? 'sun' : 'moon');
+}
+
+/* =====================================================================
+   Diálogos y avisos
+   ===================================================================== */
+const dlg = $('#dlg');
+function openDialog(html, cls = '') { dlg.onclose = null; dlg.className = cls; dlg.innerHTML = html; if (!dlg.open) dlg.showModal(); }
+function closeDialog() { dlg.onclose = null; if (dlg.open) dlg.close(); dlg.innerHTML = ''; }
+dlg.addEventListener('mousedown', e => { if (e.target === dlg && dlg.classList.contains('closable')) closeDialog(); });
+dlg.addEventListener('click', e => { if (e.target.closest('[data-close]')) closeDialog(); });
+
+function ask({ title, text, buttons }) {
+  return new Promise(res => {
+    openDialog(`<div class="modal"><div class="modal-head"><h2>${esc(title)}</h2></div><div class="modal-body"><p>${text}</p></div><div class="modal-foot">${buttons.map((b, i) => `<button class="btn ${b.cls || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`, 'sm closable');
+    let done = false;
+    dlg.onclose = () => { if (!done) { done = true; res(null); } };
+    $$('.modal-foot .btn', dlg).forEach(btn => btn.onclick = () => { done = true; const v = buttons[+btn.dataset.i].value; closeDialog(); res(v); });
+  });
+}
+
+function toast(msg, o = {}) {
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<span>${esc(msg)}</span>${o.undo ? '<button>Deshacer</button>' : ''}`;
+  if (o.undo) t.querySelector('button').onclick = () => { restore(o.undo); t.remove(); };
+  $('#toasts').appendChild(t);
+  const ms = o.ms || (o.undo ? 6000 : 3200);
+  setTimeout(() => t.classList.add('out'), ms); setTimeout(() => t.remove(), ms + 350);
+}
+
+/* =====================================================================
+   Modal: evento
+   ===================================================================== */
+const remOptions = sel => [...new Set([...REM_OPTS, sel])].sort((a, b) => a - b).map(m => `<option value="${m}"${m === sel ? ' selected' : ''}>${remLabel(m)}</option>`).join('');
+const defaultStart = date => date === today() ? fromMin(Math.min(Math.ceil((nowMin() + 1) / 60) * 60, 22 * 60)) : '09:00';
+
+function openEventModal(o = {}) {
+  const ev = o.id ? S.events.find(e => e.id === o.id) : null;
+  const qd = o.prefill && o.prefill.title != null ? quickEventData(o.prefill) : null;
+  const date = ev ? ev.date : (qd ? qd.date : (o.date || ui.cursor));
+  const st = o.time || defaultStart(date);
+  const d = ev ? clone(ev) : (qd || { title: '', date, endDate: date, allDay: !!o.allDay, start: st, end: plus(st, 60), cat: S.settings.lastCat || S.categories[0].id, repeat: 'none', until: '', reminders: defaultRems(!!o.allDay), location: '', notes: '' });
+  if (!d.reminders) d.reminders = [];
+  let rems = d.reminders.slice();
+  const occ = o.occ || d.date;
+
+  openDialog(`<form class="modal" id="evForm" autocomplete="off">
+    <div class="modal-head"><input class="title-input" name="title" placeholder="Título del evento" value="${esc(d.title)}" maxlength="200"><button type="button" class="icon-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+    <div class="modal-body">
+      <div class="frow"><span class="ficon">${ic('clock')}</span><label class="chk"><input type="checkbox" name="allDay"${d.allDay ? ' checked' : ''}> Todo el día</label></div>
+      <div class="frow"><span class="ficon"></span>
+        <div class="dtpair"><input type="date" name="date" value="${d.date}" required><input type="time" name="start" value="${d.start || ''}"></div>
+        <span class="dash">→</span>
+        <div class="dtpair"><input type="time" name="end" value="${d.end || ''}"><input type="date" name="endDate" value="${d.endDate || d.date}"></div>
+      </div>
+      <div class="frow"><span class="ficon">${ic('repeat')}</span><select name="repeat">${REPEATS.map(([v, l]) => `<option value="${v}"${d.repeat === v ? ' selected' : ''}>${l}</option>`).join('')}</select><label id="untilWrap" class="chk" hidden>hasta <input type="date" name="until" value="${d.until || ''}"></label></div>
+      <div class="frow top"><span class="ficon" style="margin-top:8px">${ic('bell')}</span><div style="flex:1"><div id="remList"></div><button type="button" class="btn ghost" id="addRem">${ic('plus', 'sm')} Añadir recordatorio</button><div class="hint" id="remHint"></div></div></div>
+      <div class="frow"><span class="ficon"></span><div class="pills">${S.categories.map(c => `<label class="pill" style="${cstyle(c.color)}"><input type="radio" name="cat" value="${c.id}"${c.id === d.cat ? ' checked' : ''}><span>${esc(c.name)}</span></label>`).join('')}</div></div>
+      <div class="frow"><span class="ficon">${ic('pinmap')}</span><input name="location" placeholder="Lugar" value="${esc(d.location)}" style="flex:1"></div>
+      <div class="frow top"><span class="ficon" style="margin-top:8px">${ic('note')}</span><textarea name="notes" rows="3" placeholder="Notas, enlaces, detalles…" style="flex:1">${esc(d.notes)}</textarea></div>
+      ${ev && ev.repeat !== 'none' ? '<div class="hint">Este evento se repite: los cambios se aplican a toda la serie.</div>' : ''}
+    </div>
+    ${ev ? `<div class="frow" id="waRow" hidden style="padding:0 18px 4px"><div class="wa-row">${waButtonsHTML()}</div></div>` : ''}
+    <div class="modal-foot">${ev ? `<button type="button" class="btn danger" id="evDel">${ic('trash', 'sm')} Eliminar</button><button type="button" class="btn ghost" id="evDup">${ic('copy', 'sm')} Duplicar</button><button type="button" class="btn ghost" id="evWa">WhatsApp</button>` : ''}<span class="spacer"></span><button type="button" class="btn" data-close>Cancelar</button><button type="submit" class="btn primary">Guardar</button></div>
+  </form>`);
+
+  const f = $('#evForm'), q = n => f.elements[n];
+  const paintRems = () => {
+    $('#remList').innerHTML = rems.map((m, i) => `<div class="rem-row"><select data-rem="${i}">${remOptions(m)}</select><button type="button" class="icon-btn sm" data-rem-del="${i}" aria-label="Quitar">${ic('x', 'sm')}</button></div>`).join('');
+    const hints = [];
+    if (rems.length && q('allDay').checked) hints.push(`En eventos de todo el día el aviso llega a las ${fmtHour(S.settings.allDayHour)} del día.`);
+    if (rems.length && S.phone.on) hints.push('Los avisos de los próximos 3 días también llegarán a tu celular.');
+    $('#remHint').textContent = hints.join(' ');
+  };
+  const sync = () => {
+    const all = q('allDay').checked;
+    q('start').hidden = q('end').hidden = all;
+    $('#untilWrap').hidden = q('repeat').value === 'none';
+    paintRems();
+  };
+  let prevStart = q('start').value;
+  f.addEventListener('change', e => {
+    const n = e.target.name;
+    if (n === 'allDay') { if (!q('allDay').checked && !q('start').value) { q('start').value = defaultStart(q('date').value); q('end').value = plus(q('start').value, 60); prevStart = q('start').value; } sync(); }
+    if (n === 'repeat') sync();
+    if (n === 'date') { if (!q('endDate').value || q('endDate').value < q('date').value || diffDays(d.date, q('endDate').value) === 0) q('endDate').value = q('date').value; }
+    if (n === 'start' && q('start').value && prevStart && q('end').value && q('endDate').value === q('date').value) { q('end').value = plus(q('start').value, Math.max(toMin(q('end').value) - toMin(prevStart), 15)); prevStart = q('start').value; }
+    if (e.target.dataset.rem != null) { rems[+e.target.dataset.rem] = +e.target.value; }
+  });
+  f.addEventListener('click', e => {
+    const del = e.target.closest('[data-rem-del]');
+    if (del) { rems.splice(+del.dataset.remDel, 1); paintRems(); }
+    if (e.target.closest('#addRem')) { const nxt = [10, 30, 60, 1440, 5, 0, 120, 2880].find(x => !rems.includes(x)); rems.push(nxt == null ? 15 : nxt); paintRems(); }
+  });
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    const allDay = q('allDay').checked;
+    const data = { title: q('title').value.trim() || 'Sin título', date: q('date').value, endDate: q('endDate').value || q('date').value, allDay, start: allDay ? '' : q('start').value, end: allDay ? '' : q('end').value, cat: (f.querySelector('[name=cat]:checked') || {}).value || S.categories[0].id, repeat: q('repeat').value, until: q('repeat').value === 'none' ? '' : q('until').value, reminders: [...new Set(rems)].sort((a, b) => a - b), location: q('location').value.trim(), notes: q('notes').value };
+    if (!data.date) { q('date').focus(); return; }
+    if (data.endDate < data.date) data.endDate = data.date;
+    if (!allDay) {
+      if (!data.start) { q('start').focus(); toast('Elige una hora de inicio o marca «Todo el día»'); return; }
+      if (!data.end || (data.endDate === data.date && toMin(data.end) < toMin(data.start))) data.end = plus(data.start, 60);
+    }
+    if (data.until && data.until < data.date) data.until = '';
+    S.settings.lastCat = data.cat;
+    if (ev) { Object.assign(ev, data); delete ev.demo; } else S.events.push(Object.assign({ id: uid(), created: Date.now() }, data));
+    save(); closeDialog(); render(); toast(ev ? 'Evento actualizado' : 'Evento creado');
+  });
+  if (ev) {
+    $('#evDel').onclick = () => deleteEvent(ev, occ);
+    $('#evWa').onclick = () => { waText = eventShareText(ev, occ); const r = $('#waRow'); r.hidden = !r.hidden; };
+    $('#evDup').onclick = () => { const c = Object.assign(clone(ev), { id: uid(), title: ev.title + ' (copia)', exceptions: [], created: Date.now() }); delete c.demo; S.events.push(c); save(); closeDialog(); render(); toast('Evento duplicado'); };
+  }
+  sync();
+  setTimeout(() => { const t = q('title'); t.focus(); if (!ev) t.select(); }, 30);
+}
+
+async function deleteEvent(ev, occ) {
+  const snap = snapshot();
+  if (ev.repeat && ev.repeat !== 'none') {
+    const r = await ask({ title: 'Eliminar evento repetitivo', text: `«${esc(ev.title)}» se repite. ¿Qué quieres eliminar?`, buttons: [{ label: 'Solo este día', value: 'one' }, { label: 'Toda la serie', value: 'all', cls: 'danger' }, { label: 'Cancelar', value: null }] });
+    if (!r) return;
+    if (r === 'one') { ev.exceptions = ev.exceptions || []; if (!ev.exceptions.includes(occ)) ev.exceptions.push(occ); }
+    else S.events = S.events.filter(e => e.id !== ev.id);
+  } else S.events = S.events.filter(e => e.id !== ev.id);
+  closeDialog(); save(); render(); toast('Evento eliminado', { undo: snap });
+}
+
+/* =====================================================================
+   Modal: tarea
+   ===================================================================== */
+function openTaskModal(o = {}) {
+  const t = o.id ? S.tasks.find(x => x.id === o.id) : null;
+  const d = t ? clone(t) : Object.assign({ text: '', notes: '', date: '', time: '', remind: null, priority: 0, cat: '' }, o.prefill || {});
+  openDialog(`<form class="modal" id="tkForm" autocomplete="off">
+    <div class="modal-head"><input class="title-input" name="text" placeholder="¿Qué hay que hacer?" value="${esc(d.text)}" maxlength="300"><button type="button" class="icon-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+    <div class="modal-body">
+      <div class="frow"><span class="ficon">${ic('cal')}</span><div class="dtpair"><input type="date" name="date" value="${d.date || ''}"><input type="time" name="time" value="${d.time || ''}"></div></div>
+      <div class="frow"><span class="ficon">${ic('bell')}</span><select name="remind"><option value="">Sin recordatorio</option>${REM_OPTS.map(m => `<option value="${m}"${d.remind === m ? ' selected' : ''}>${remLabel(m)}</option>`).join('')}</select><span class="hint">Requiere fecha</span></div>
+      <div class="frow"><span class="ficon">${ic('flag')}</span><select name="priority">${['Sin prioridad', 'Prioridad media', 'Prioridad alta'].map((l, i) => `<option value="${i}"${d.priority === i ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="frow"><span class="ficon"></span><div class="pills"><label class="pill" style="${cstyle('#64748b')}"><input type="radio" name="cat" value=""${!d.cat ? ' checked' : ''}><span>Ninguna</span></label>${S.categories.map(c => `<label class="pill" style="${cstyle(c.color)}"><input type="radio" name="cat" value="${c.id}"${c.id === d.cat ? ' checked' : ''}><span>${esc(c.name)}</span></label>`).join('')}</div></div>
+      <div class="frow top"><span class="ficon" style="margin-top:8px">${ic('note')}</span><textarea name="notes" rows="3" placeholder="Detalles…" style="flex:1">${esc(d.notes || '')}</textarea></div>
+    </div>
+    <div class="modal-foot">${t ? `<button type="button" class="btn danger" id="tkDel">${ic('trash', 'sm')} Eliminar</button>` : ''}<span class="spacer"></span><button type="button" class="btn" data-close>Cancelar</button><button type="submit" class="btn primary">Guardar</button></div></form>`);
+  const f = $('#tkForm'), q = n => f.elements[n];
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = q('text').value.trim(); if (!text) { q('text').focus(); return; }
+    const date = q('date').value, time = date ? q('time').value : '';
+    const data = { text, notes: q('notes').value, date, time, remind: date && q('remind').value !== '' ? +q('remind').value : null, priority: +q('priority').value, cat: (f.querySelector('[name=cat]:checked') || {}).value || '' };
+    if (t) { Object.assign(t, data); delete t.demo; } else S.tasks.push(Object.assign({ id: uid(), done: false, created: Date.now() }, data));
+    save(); closeDialog(); render(); toast(t ? 'Tarea actualizada' : 'Tarea creada');
+  });
+  if (t) $('#tkDel').onclick = () => { closeDialog(); deleteTask(t.id); };
+  setTimeout(() => q('text').focus(), 30);
+}
+function deleteTask(id) { const snap = snapshot(); S.tasks = S.tasks.filter(t => t.id !== id); save(); render(); toast('Tarea eliminada', { undo: snap }); }
+
+/* =====================================================================
+   Ajustes, copias de seguridad, .ics
+   ===================================================================== */
+function download(name, text, mime) {
+  const a = document.createElement('a'), url = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function exportJSON() {
+  const data = JSON.stringify({ app: 'calendario-pro', exported: new Date().toISOString(), events: S.events, tasks: S.tasks, notes: S.notes, categories: S.categories, settings: S.settings, phone: { people: S.phone.people.map(p => ({ name: p.name, topic: p.topic })) } }, null, 2);
+  download(`calendario-pro-${today()}.json`, data, 'application/json');
+  S.settings.lastBackup = Date.now(); save(); renderSidebar(); toast('Copia de seguridad descargada');
+}
+function importJSON(file) {
+  const rd = new FileReader();
+  rd.onload = async () => {
+    let o;
+    try { o = JSON.parse(rd.result); if (!o || !Array.isArray(o.events)) throw 0; } catch (e) { toast('Ese archivo no es una copia válida de Calendario Pro'); return; }
+    const tasks = Array.isArray(o.tasks) ? o.tasks : [], notes = Array.isArray(o.notes) ? o.notes : [];
+    const r = await ask({ title: 'Importar copia de seguridad', text: `El archivo trae <b>${o.events.length}</b> eventos, <b>${tasks.length}</b> tareas y <b>${notes.length}</b> notas.<br>¿Cómo quieres importarlo?`, buttons: [{ label: 'Combinar con lo actual', value: 'merge', cls: 'primary' }, { label: 'Reemplazar todo', value: 'replace', cls: 'danger' }, { label: 'Cancelar', value: null }] });
+    if (!r) return;
+    const snap = snapshot();
+    if (r === 'replace') {
+      S.events = o.events; S.tasks = tasks; S.notes = notes;
+      if (Array.isArray(o.categories) && o.categories.length) S.categories = o.categories;
+      if (o.settings) S.settings = Object.assign(S.settings, o.settings);
+    } else {
+      const have = arr => new Set(arr.map(x => x.id));
+      const ids = { events: have(S.events), tasks: have(S.tasks), notes: have(S.notes) };
+      o.events.forEach(x => { if (!ids.events.has(x.id)) S.events.push(x); });
+      tasks.forEach(x => { if (!ids.tasks.has(x.id)) S.tasks.push(x); });
+      notes.forEach(x => { if (!ids.notes.has(x.id)) S.notes.push(x); });
+      (o.categories || []).forEach(c => { if (!S.categories.some(k => k.id === c.id)) S.categories.push(c); });
+    }
+    if (o.phone && Array.isArray(o.phone.people) && !S.phone.on && !S.phone.people.length) {
+      o.phone.people.slice(0, 10).forEach(p => { if (p && validTopic(p.topic)) S.phone.people.push({ id: 'p' + uid(), name: String(p.name || 'Celular').slice(0, 40), topic: p.topic, on: true }); });
+    }
+    save(); closeDialog(); render(); toast('Copia importada', { undo: snap });
+  };
+  rd.readAsText(file);
+}
+
+const icsEsc = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+const icsFold = l => { const out = []; while (l.length > 74) { out.push(l.slice(0, 74)); l = ' ' + l.slice(74); } out.push(l); return out.join('\r\n'); };
+const icsD = s => s.replace(/-/g, '');
+const icsDT = (s, t) => `${icsD(s)}T${(t || '00:00').replace(':', '')}00`;
+function exportICS() {
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Calendario Pro//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Calendario Pro'];
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  for (const ev of S.events) {
+    L.push('BEGIN:VEVENT', `UID:${ev.id}@calendariopro`, `DTSTAMP:${stamp}`, `SUMMARY:${icsEsc(ev.title)}`);
+    const end = ev.endDate || ev.date;
+    if (ev.allDay) L.push(`DTSTART;VALUE=DATE:${icsD(ev.date)}`, `DTEND;VALUE=DATE:${icsD(addDays(end, 1))}`);
+    else L.push(`DTSTART:${icsDT(ev.date, ev.start)}`, `DTEND:${icsDT(end, ev.end || plus(ev.start || '00:00', 60))}`);
+    const R = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', biweekly: 'FREQ=WEEKLY;INTERVAL=2', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[ev.repeat];
+    if (R) L.push(`RRULE:${R}${ev.until ? ';UNTIL=' + icsD(ev.until) + (ev.allDay ? '' : 'T235959') : ''}`);
+    (ev.exceptions || []).forEach(x => L.push(ev.allDay ? `EXDATE;VALUE=DATE:${icsD(x)}` : `EXDATE:${icsDT(x, ev.start)}`));
+    if (ev.location) L.push(`LOCATION:${icsEsc(ev.location)}`);
+    if (ev.notes) L.push(`DESCRIPTION:${icsEsc(ev.notes)}`);
+    (ev.reminders || []).forEach(m => L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(ev.title)}`, `TRIGGER:-PT${m}M`, 'END:VALARM'));
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR');
+  download(`calendario-pro-${today()}.ics`, L.map(icsFold).join('\r\n'), 'text/calendar');
+  toast('Archivo .ics descargado (Google Calendar, Outlook, Apple…)');
+}
+
+function openSettings() {
+  const s = S.settings, perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  const permTxt = { granted: 'Activadas ✓', denied: 'Bloqueadas (actívalas en el candado de la barra de direcciones)', default: 'Sin activar', unsupported: 'Este navegador no las soporta' }[perm];
+  const hasDemo = S.events.some(e => e.demo) || S.tasks.some(e => e.demo) || S.notes.some(e => e.demo);
+  openDialog(`<div class="modal"><div class="modal-head"><h2>Ajustes</h2><button class="icon-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+    <div class="modal-body" id="setBody" style="gap:18px">
+      <div class="set-sec"><h3>Apariencia</h3>
+        <div class="set-row"><span>Tema</span><select data-set="theme"><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Oscuro</option></select></div>
+        <div class="set-row"><span>La semana empieza el</span><select data-set="weekStart"><option value="1">Lunes</option><option value="0">Domingo</option><option value="6">Sábado</option></select></div>
+        <div class="set-row"><span>Formato de hora</span><select data-set="hour12"><option value="false">24 horas (15:00)</option><option value="true">12 horas (3:00 PM)</option></select></div>
+      </div>
+      <div class="set-sec"><h3>Recordatorios</h3>
+        <div class="set-row"><span>Aviso por defecto (eventos nuevos)</span><select data-set="defaultReminder"><option value="">Ninguno</option>${REM_OPTS.map(m => `<option value="${m}">${remLabel(m)}</option>`).join('')}</select></div>
+        <div class="set-row"><span>Hora del aviso en eventos de todo el día</span><select data-set="allDayHour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}">${fmtHour(h)}</option>`).join('')}</select></div>
+        <div class="set-row"><span>Sonido al recordar</span><span><label class="chk"><input type="checkbox" data-set="sound"> Activado</label> <button class="btn" data-act="test-alert">Probar</button></span></div>
+        <div class="set-row"><span>Notificaciones del navegador<br><span class="hint">${permTxt}</span></span>${perm === 'default' ? '<button class="btn primary" data-act="enable-notif">Activar</button>' : ''}</div>
+        <div class="hint">Los avisos suenan y aparecen mientras Calendario Pro esté abierto en una pestaña (puede estar minimizada). Si lo cierras, los recordatorios pendientes de las últimas 24 h te aparecen al volver a abrirlo.</div>
+      </div>
+      <div class="set-sec" id="syncSec">${syncSecHTML()}</div>
+      <div class="set-sec" id="phoneSec">${phoneSecHTML()}</div>
+      <div class="set-sec" id="waSec">${waSecHTML()}</div>
+      <div class="set-sec"><h3>Categorías</h3><div id="catEdit"></div><div><button class="btn" data-act="cat-add">${ic('plus', 'sm')} Nueva categoría</button></div></div>
+      <div class="set-sec"><h3>Copia de seguridad y otros equipos</h3>
+        <div class="hint">Tus datos viven en este navegador. Para llevarlos a otro computador exporta una copia e impórtala allá.</div>
+        <div class="set-row"><button class="btn primary" data-act="export-json">${ic('down', 'sm')} Exportar copia (.json)</button><button class="btn" data-act="import-json">${ic('up', 'sm')} Importar copia</button></div>
+        <div class="set-row"><button class="btn" data-act="export-ics">${ic('cal', 'sm')} Exportar a Google/Outlook (.ics)</button></div>
+      </div>
+      <div class="set-sec"><h3>Datos</h3>
+        <div class="set-row">${hasDemo ? '<button class="btn" data-act="clear-demo">Quitar ejemplos</button>' : ''}<button class="btn danger" data-act="wipe">Borrar todos mis datos</button></div>
+      </div>
+    </div></div>`, 'closable');
+  $$('[data-set]', dlg).forEach(el => {
+    const k = el.dataset.set, v = s[k];
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : String(v);
+  });
+  const paintCats = () => { $('#catEdit').innerHTML = S.categories.map(c => `<div class="cat-edit" style="margin-bottom:8px"><input type="color" value="${c.color}" data-cc="${c.id}"><input type="text" value="${esc(c.name)}" data-cn="${c.id}" maxlength="30"><button class="icon-btn" data-act="cat-del" data-id="${c.id}" ${S.categories.length < 2 ? 'disabled' : ''} aria-label="Eliminar categoría">${ic('trash', 'sm')}</button></div>`).join(''); };
+  paintCats(); dlg._paintCats = paintCats;
+}
+
+/* =====================================================================
+   Recordatorios
+   ===================================================================== */
+const alerts = [];
+let audio;
+function unlockAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { } }
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
+function beep() {
+  if (!S.settings.sound || !audio) return;
+  try {
+    const t = audio.currentTime;
+    [0, .22, .44, .9, 1.12, 1.34].forEach((o, i) => {
+      const osc = audio.createOscillator(), g = audio.createGain();
+      osc.type = 'sine'; osc.frequency.value = [880, 880, 1175, 880, 880, 1175][i];
+      g.gain.setValueAtTime(0, t + o); g.gain.linearRampToValueAtTime(.28, t + o + .02); g.gain.exponentialRampToValueAtTime(.0001, t + o + .2);
+      osc.connect(g); g.connect(audio.destination); osc.start(t + o); osc.stop(t + o + .22);
+    });
+  } catch (e) { }
+}
+
+function itemStartMs(dateStr, time) {
+  const d = parseDate(dateStr);
+  if (time) { const [h, m] = time.split(':').map(Number); d.setHours(h, m, 0, 0); } else d.setHours(+S.settings.allDayHour || 0, 0, 0, 0);
+  return d.getTime();
+}
+
+function alertSub(a) {
+  const diff = (a.when - Date.now()) / 60000;
+  const when = `${relDay(a.date)}${a.time ? ' · ' + fmtTime(a.time) : ''}`;
+  const rel = diff > 1 ? `en ${human(diff)}` : diff >= -1 ? 'ahora' : `empezó hace ${human(diff)}`;
+  return `${when} — ${rel}`;
+}
+
+function raiseAlert(info, silent) {
+  const a = Object.assign({ aid: uid() }, info);
+  alerts.unshift(a);
+  renderAlerts();
+  if (!silent) { beep(); systemNotify(a); }
+}
+
+function systemNotify(a) {
+  if (!S.settings.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const opts = { body: alertSub(a), tag: a.key || a.aid, requireInteraction: true, icon: 'icon.svg' };
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification(a.title, opts)).catch(() => { });
+    else { const n = new Notification(a.title, opts); n.onclick = () => { window.focus(); n.close(); }; }
+  } catch (e) { }
+}
+
+function renderAlerts() {
+  $('#alerts').innerHTML = alerts.map(a => `<div class="alert" style="--c:${a.color || '#4f6bff'}" data-aid="${a.aid}"><div class="ah"><span class="bell">${ic('bell')}</span><div style="flex:1;min-width:0"><div class="at">${esc(a.title)}</div><div class="as" data-sub>${esc(alertSub(a))}</div></div><button class="icon-btn sm" data-act="al-dismiss" data-aid="${a.aid}" aria-label="Descartar">${ic('x', 'sm')}</button></div>
+    <div class="ab"><span class="lbl2">Posponer</span><button class="btn" data-act="al-snooze" data-aid="${a.aid}" data-min="5">5 min</button><button class="btn" data-act="al-snooze" data-aid="${a.aid}" data-min="15">15 min</button><button class="btn" data-act="al-snooze" data-aid="${a.aid}" data-min="60">1 h</button>${a.kind === 'task' ? `<button class="btn primary" data-act="al-done" data-aid="${a.aid}">Hecha</button>` : ''}<button class="btn" data-act="al-wa" data-aid="${a.aid}">WhatsApp</button><button class="btn" data-act="al-open" data-aid="${a.aid}">Abrir</button></div></div>`).join('');
+  document.title = (alerts.length ? `(${alerts.length}) ` : '') + 'Calendario Pro';
+}
+
+function checkReminders() {
+  const now = Date.now(), t0 = today(), from = addDays(t0, -2), to = addDays(t0, 9);
+  let changed = false;
+  const fire = (key, ms, endMs, info) => {
+    if (S.fired[key]) return;
+    S.fired[key] = now; changed = true;
+    if (now > endMs + 36e5) return;
+    raiseAlert(Object.assign({ key, when: ms }, info));
+  };
+  for (const ev of S.events) {
+    if (!ev.reminders || !ev.reminders.length) continue;
+    const span = eventSpan(ev);
+    for (const occ of occurrences(ev, from, to)) {
+      const start = itemStartMs(occ, ev.allDay ? null : ev.start);
+      const end = ev.allDay ? itemStartMs(addDays(occ, span), null) + 6 * 36e5 : (span ? itemStartMs(addDays(occ, span), ev.end || ev.start) : (ev.end ? itemStartMs(occ, ev.end) : start + 36e5));
+      for (const m of ev.reminders) {
+        const at = start - m * 60000;
+        if (at <= now && now - at <= DAY_MS) fire(`e|${ev.id}|${occ}|${ev.allDay ? 'd' : ev.start}|${m}`, start, end, { kind: 'event', refId: ev.id, occ, date: occ, time: ev.allDay ? '' : ev.start, title: ev.title, color: catOf(ev.cat).color });
+      }
+    }
+  }
+  for (const t of S.tasks) {
+    if (t.done || !t.date || t.remind == null) continue;
+    const start = itemStartMs(t.date, t.time || null), at = start - t.remind * 60000;
+    if (at <= now && now - at <= DAY_MS) fire(`t|${t.id}|${t.date}|${t.time}|${t.remind}`, start, start + 6 * 36e5, { kind: 'task', refId: t.id, date: t.date, time: t.time, title: t.text, color: t.cat ? catOf(t.cat).color : '#64748b' });
+  }
+  const due = S.snoozes.filter(z => z.at <= now);
+  if (due.length) { S.snoozes = S.snoozes.filter(z => z.at > now); due.forEach(z => raiseAlert(z.info)); changed = true; }
+  for (const k in S.fired) if (now - S.fired[k] > 45 * DAY_MS) { delete S.fired[k]; changed = true; }
+  if (changed) save();
+}
+
+function updateNowLine() { const n = $('#nowline'); if (n) n.style.top = nowMin() / 60 * HH + 'px'; $$('#alerts [data-sub]').forEach((el, i) => { if (alerts[i]) el.textContent = alertSub(alerts[i]); }); }
+
+function tick() {
+  checkReminders(); updateNowLine();
+  if (S.phone.on && Date.now() - phoneTried > 10 * 60000) phoneSoon();
+  if (S.sync.on && !document.hidden && Date.now() - syncTried > 45000) syncSoon(300);
+  if (ui.lastDay !== today()) { ui.lastDay = today(); render(); }
+}
+
+function startTicker() {
+  setInterval(tick, 15000);
+  try {
+    const w = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},10000)'], { type: 'text/javascript' })));
+    w.onmessage = tick; w.onerror = () => { };
+  } catch (e) { /* sin worker: queda el temporizador normal */ }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+}
+
+/* =====================================================================
+   Avisos en el celular (ntfy.sh)
+   Cada recordatorio de los próximos ~3 días se programa en ntfy para cada celular
+   de la lista; ntfy lo entrega a la hora exacta aunque este computador esté apagado.
+   Al editar o borrar un evento se reemplaza o cancela el aviso programado.
+   ntfy no usa números de teléfono: cada celular se suscribe a su propio código.
+   ===================================================================== */
+const PHONE_AHEAD = 71 * 36e5, PHONE_GRACE = 20 * 60000;
+let phoneTimer = null, phoneBusy = false, phoneAgain = false, phoneLast = 0, phoneTried = 0, phoneErr = '';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hash53 = str => {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+};
+const phoneSeq = key => 'r' + hash53(key).toString(36);
+const rfc2047 = s => '=?UTF-8?B?' + btoa(Array.from(new TextEncoder().encode(s), b => String.fromCharCode(b)).join('')) + '?=';
+const validTopic = t => /^[A-Za-z0-9_-]{8,64}$/.test(t || '');
+const phoneBase = () => S.phone.server.replace(/\/+$/, '');
+const phoneTargets = () => S.phone.people.filter(p => p.on && validTopic(p.topic));
+const phoneURL = (p, seq) => `${phoneBase()}/${encodeURIComponent(p.topic)}${seq ? '/' + seq : ''}`;
+function randomTopic() {
+  const a = new Uint8Array(16);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else a.forEach((_, i) => { a[i] = Math.random() * 256; });
+  return 'calpro-' + Array.from(a, b => (b % 36).toString(36)).join('');
+}
+const newPerson = name => ({ id: 'p' + uid(), name, topic: randomTopic(), on: true });
+
+function phoneBody(dateStr, time, m, at, place) {
+  const n = diffDays(fmtDate(new Date(at)), dateStr);
+  const day = n === 0 ? 'Hoy' : n === 1 ? 'Mañana' : fmtShort(dateStr);
+  const lead = m === 0 ? (time ? 'empieza ahora' : 'es hoy') : `en ${human(m)}`;
+  return `${day} · ${time ? fmtTime(time) : 'todo el día'} — ${lead}${place ? '\n📍 ' + place : ''}`;
+}
+
+/* avisos que cada celular debería tener programados ahora mismo: seq → {at, kind, title, body, sig} */
+function phoneWanted() {
+  const now = Date.now(), t0 = today(), from = addDays(t0, -1), to = addDays(t0, 11), want = {};
+  const add = (key, at, start, kind, title, body) => {
+    if (at > now + PHONE_AHEAD || at < now - 15 * 60000 || start < now) return;
+    want[phoneSeq(key)] = { at, kind, title: String(title).slice(0, 120), body, sig: `${at}|${title}|${body}` };
+  };
+  for (const ev of S.events) {
+    if (!ev.reminders || !ev.reminders.length) continue;
+    for (const occ of occurrences(ev, from, to)) {
+      const start = itemStartMs(occ, ev.allDay ? null : ev.start);
+      for (const m of ev.reminders) { const at = start - m * 60000; add(`e:${ev.id}:${occ}:${m}`, at, start, 'event', ev.title, phoneBody(occ, ev.allDay ? '' : ev.start, m, at, ev.location)); }
+    }
+  }
+  for (const t of S.tasks) {
+    if (t.done || !t.date || t.remind == null) continue;
+    const start = itemStartMs(t.date, t.time || null), at = start - t.remind * 60000;
+    add(`t:${t.id}:${t.remind}`, at, start, 'task', t.text, phoneBody(t.date, t.time, t.remind, at, ''));
+  }
+  return want;
+}
+
+const phoneSoon = () => { clearTimeout(phoneTimer); phoneTimer = setTimeout(phoneSync, 2500); };
+
+/* lo programado (sched) está indexado por la URL completa: servidor + código + id del aviso */
+async function phoneSync() {
+  const P = S.phone;
+  if (!P.on) return;
+  if (phoneBusy) { phoneAgain = true; return; }
+  phoneBusy = true; phoneAgain = false; phoneTried = Date.now(); paintPhone(true);
+  let dirty = false, retry = 0;
+  try {
+    const want = phoneWanted(), jobs = {};
+    for (const p of phoneTargets()) for (const seq of Object.keys(want)) jobs[phoneURL(p, seq)] = want[seq];
+    for (const url of Object.keys(jobs)) {
+      const w = jobs[url], cur = P.sched[url];
+      if (cur && cur.sig === w.sig) continue;
+      const at = Math.max(w.at, Date.now() + 12000);
+      const r = await fetch(url, { method: 'POST', body: w.body, headers: { At: String(Math.round(at / 1000)), Title: rfc2047(w.title), Priority: '4', Tags: w.kind === 'task' ? 'white_check_mark' : 'alarm_clock' } });
+      if (!r.ok) throw Object.assign(new Error('http'), { status: r.status });
+      P.sched[url] = { at: w.at, sig: w.sig }; dirty = true;
+      await sleep(80);
+    }
+    const now = Date.now();
+    for (const url of Object.keys(P.sched)) {
+      if (jobs[url]) continue;
+      const cur = P.sched[url];
+      if (cur.at > now + 30000) {
+        const r = await fetch(url, { method: 'DELETE' });
+        if (!r.ok && r.status !== 404) throw Object.assign(new Error('http'), { status: r.status });
+        delete P.sched[url]; dirty = true; await sleep(80);
+      } else if (cur.at < now - PHONE_GRACE) { delete P.sched[url]; dirty = true; }
+    }
+    phoneErr = ''; phoneLast = Date.now();
+  } catch (e) {
+    phoneErr = e.status === 429 ? 'El servicio está ocupado; reintentando en unos segundos…'
+      : e.status ? `El servicio respondió con error ${e.status}. Revisa los códigos y el servidor en Ajustes.`
+        : 'Sin conexión con el servicio; reintentaré en un momento.';
+    retry = e.status === 429 ? 30000 : (e.status && e.status < 500 ? 0 : 60000);
+  }
+  phoneBusy = false;
+  if (dirty) save();
+  paintPhone(true);
+  if (retry) { clearTimeout(phoneTimer); phoneTimer = setTimeout(phoneSync, retry); }
+  else if (phoneAgain) phoneSoon();
+}
+
+/* cancela en ntfy todo lo programado (al apagar la función o cambiar de servidor) */
+async function phoneCancelAll() {
+  const now = Date.now(), urls = Object.keys(S.phone.sched).filter(u => S.phone.sched[u].at > now + 30000);
+  S.phone.sched = {};
+  for (const u of urls) { try { await fetch(u, { method: 'DELETE' }); await sleep(60); } catch (e) { break; } }
+}
+
+async function phoneTest(id) {
+  const p = S.phone.people.find(x => x.id === id);
+  if (!p || !validTopic(p.topic)) { toast('Ese código no es válido'); return; }
+  try {
+    const r = await fetch(phoneURL(p, ''), { method: 'POST', body: `Prueba de Calendario Pro para «${p.name}»: si ves esto, los recordatorios llegarán a este celular.`, headers: { Title: rfc2047('Calendario Pro'), Priority: '4', Tags: 'tada' } });
+    toast(r.ok ? `Prueba enviada a «${p.name}»: debería llegar en unos segundos` : `El servicio respondió con error ${r.status}`, { ms: 5000 });
+  } catch (e) { toast('No se pudo conectar. ¿Tienes internet?'); }
+}
+
+async function phoneChange(el) {
+  const P = S.phone, ds = el.dataset;
+  if (ds.phone === 'on') {
+    if (el.checked) { if (!P.people.length) P.people.push(newPerson('Mi celular')); P.on = true; phoneLast = 0; phoneErr = ''; save(); }
+    else { P.on = false; save(); await phoneCancelAll(); save(); }
+    paintPhone();
+  } else if (ds.phone === 'server') {
+    const v = el.value.trim().replace(/\/+$/, '');
+    if (!/^https?:\/\/[^\s/]+/i.test(v)) { toast('Dirección del servidor no válida'); el.value = P.server; return; }
+    if (v !== P.server) { await phoneCancelAll(); P.server = v; save(); phoneSoon(); }
+  } else if (ds.pid) {
+    const p = P.people.find(x => x.id === ds.pid); if (!p) return;
+    if (ds.pf === 'name') p.name = el.value.trim() || p.name;
+    else if (ds.pf === 'on') p.on = el.checked;
+    else if (ds.pf === 'topic') {
+      const v = el.value.trim();
+      if (!validTopic(v)) { toast('El código debe tener entre 8 y 64 letras, números, - o _'); el.value = p.topic; return; }
+      p.topic = v;
+    }
+    save(); paintPhone();
+  }
+}
+
+function phoneInvite(p) {
+  const srv = phoneBase() === 'https://ntfy.sh' ? '' : ` (servidor: ${phoneBase()})`;
+  return `Para recibir mis recordatorios en tu celular: 1) instala la app gratis «ntfy» (Android: Play Store · iPhone: App Store). 2) Ábrela, pulsa «+» y suscríbete al código${srv}: ${p.topic}`;
+}
+function copyText(txt, okMsg) {
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(okMsg)).catch(() => toast('No se pudo copiar automáticamente; selecciónalo y copia con Ctrl+C'));
+}
+
+function phoneCounts() {
+  const pend = Object.keys(S.phone.sched).filter(u => S.phone.sched[u].at > Date.now());
+  return { n: new Set(pend.map(u => u.split('/').pop())).size, k: phoneTargets().length };
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+function phoneAgo() { const m = Math.floor((Date.now() - phoneLast) / 60000); return m < 1 ? 'hace un momento' : `hace ${human(m)}`; }
+function phoneStatusHTML() {
+  const P = S.phone; if (!P.on) return '';
+  if (phoneBusy) return 'Sincronizando…';
+  if (phoneErr) return '⚠ ' + esc(phoneErr);
+  const { n, k } = phoneCounts();
+  if (!k) return 'Añade o activa al menos un celular.';
+  if (!phoneLast) return 'Conectando…';
+  return `✓ ${plural(n, 'recordatorio programado', 'recordatorios programados')} (próximas 72 h) en ${plural(k, 'celular', 'celulares')} · sincronizado ${phoneAgo()}`;
+}
+function personHTML(p) {
+  return `<div class="person"><div class="p-top"><input type="text" data-pid="${p.id}" data-pf="name" value="${esc(p.name)}" maxlength="40" placeholder="Nombre o número (solo para reconocerlo)" aria-label="Nombre del celular"><label class="chk"><input type="checkbox" data-pid="${p.id}" data-pf="on"${p.on ? ' checked' : ''}> Activo</label><button class="icon-btn sm" data-act="phone-newcode" data-id="${p.id}" title="Generar código nuevo" aria-label="Generar código nuevo">${ic('repeat', 'sm')}</button><button class="icon-btn sm" data-act="phone-del" data-id="${p.id}" title="Quitar" aria-label="Quitar">${ic('trash', 'sm')}</button></div>
+    <div class="code-row"><input type="text" data-pid="${p.id}" data-pf="topic" value="${esc(p.topic)}" spellcheck="false" autocomplete="off" aria-label="Código"><button class="btn" data-act="phone-copy" data-id="${p.id}">Copiar</button><button class="btn" data-act="phone-invite" data-id="${p.id}" title="Copia un mensaje listo para enviar por WhatsApp">Invitación</button><button class="btn primary" data-act="phone-test" data-id="${p.id}">Probar</button></div></div>`;
+}
+function phoneSecHTML() {
+  const P = S.phone;
+  const head = `<h3>Avisos en el celular</h3><label class="chk"><input type="checkbox" data-phone="on"${P.on ? ' checked' : ''}> Enviar mis recordatorios a celulares</label>`;
+  if (!P.on) return head + `<div class="hint">Recibe una notificación en uno o varios celulares a la hora de cada recordatorio, aunque este computador esté apagado. Sin cuentas ni contraseñas.</div>`;
+  return head + `
+    <div class="hint">Añade cada celular (el tuyo, el de tu pareja, tu mamá…). No se usan números de teléfono: cada celular se suscribe a su propio código en la app gratis <b>ntfy</b>.</div>
+    ${P.people.map(personHTML).join('')}
+    <div><button class="btn" data-act="phone-add">${ic('plus', 'sm')} Añadir otro celular</button></div>
+    <ol class="steps">
+      <li>En cada celular instala <b>ntfy</b> (Android: Play Store · iPhone: App Store).</li>
+      <li>Ábrela, pulsa <b>+</b> y escribe el código de ese celular, tal cual. Con <b>Invitación</b> copias un mensaje listo para enviarle por WhatsApp.</li>
+      <li>Pulsa <b>Probar</b> y comprueba que suena.</li>
+    </ol>
+    <div class="hint" id="phoneStatus">${phoneStatusHTML()}</div>
+    <div class="hint">Todos los celulares activos reciben todos los recordatorios. Se programan los de las próximas 72 horas: abre Calendario Pro al menos una vez cada 3 días. El título y la hora de cada aviso pasan por el servicio ntfy.sh y solo los puede leer quien conozca el código: <b>no lo compartas</b> con quien no deba verlos.</div>
+    <details><summary class="hint" style="cursor:pointer">Opciones avanzadas</summary>
+      <div class="set-row" style="margin-top:8px"><span>Servidor</span><input type="text" data-phone="server" value="${esc(P.server)}" style="min-width:220px"></div>
+    </details>`;
+}
+function phoneFootHTML() {
+  if (!S.phone.on) return '';
+  if (phoneErr) return '📱 Celulares: sin conexión, reintentando';
+  if (!phoneLast) return '📱 Celulares: conectando…';
+  const { n, k } = phoneCounts(); return `📱 ${plural(k, 'celular', 'celulares')} · ${plural(n, 'aviso programado', 'avisos programados')}`;
+}
+function paintPhone(statusOnly) {
+  const st = $('#phoneStatus'), foot = $('#phoneFoot');
+  if (foot) foot.innerHTML = phoneFootHTML();
+  if (statusOnly) { if (st) st.innerHTML = phoneStatusHTML(); return; }
+  const sec = $('#phoneSec'); if (sec) sec.innerHTML = phoneSecHTML();
+  renderSidebar();
+}
+
+/* =====================================================================
+   WhatsApp (manual y gratis): abre el chat con el mensaje ya escrito
+   ===================================================================== */
+let waText = '';
+const waDigits = n => { const d = String(n || '').replace(/\D/g, ''); return d.length === 10 ? '57' + d : d; };
+const waValid = n => /^\d{11,15}$/.test(waDigits(n));
+const waLink = (n, text) => `https://wa.me/${n ? waDigits(n) : ''}?text=${encodeURIComponent(text)}`;
+const waPretty = n => { const d = waDigits(n); return d.length === 12 && d.startsWith('57') ? `+57 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : '+' + d; };
+const waContacts = () => S.settings.waContacts.filter(c => waValid(c.number));
+
+function eventShareText(ev, occ) {
+  const d = occ || ev.date, span = eventSpan(ev);
+  let when = cap(fmtLong(d)) + (span ? ` → ${fmtLong(addDays(d, span))}` : '');
+  when += (!ev.allDay && ev.start) ? ` · ${fmtTime(ev.start)}${ev.end ? ' – ' + fmtTime(ev.end) : ''}` : ' · todo el día';
+  const lines = [`📅 *${ev.title}*`, when];
+  if (ev.location) lines.push(`📍 ${ev.location}`);
+  if (ev.repeat && ev.repeat !== 'none') lines.push(`🔁 ${REPEAT_TXT[ev.repeat]}`);
+  if (ev.notes && ev.notes.trim()) lines.push('', ev.notes.trim());
+  return lines.join('\n');
+}
+function taskShareText(t) {
+  const lines = [`✅ *${t.text}*`];
+  if (t.date) lines.push(cap(fmtLong(t.date)) + (t.time ? ` · ${fmtTime(t.time)}` : ''));
+  if (t.notes && t.notes.trim()) lines.push('', t.notes.trim());
+  return lines.join('\n');
+}
+function waButtonsHTML() {
+  return waContacts().map(c => `<button type="button" class="btn" data-act="wa-send" data-id="${c.id}">${esc(c.name || waPretty(c.number))}</button>`).join('')
+    + `<button type="button" class="btn ghost" data-act="wa-send" data-id="">Elegir contacto en WhatsApp…</button>`;
+}
+function waShareDialog(text) {
+  waText = text;
+  openDialog(`<div class="modal"><div class="modal-head"><h2>Enviar por WhatsApp</h2><button class="icon-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+    <div class="modal-body"><pre class="wa-preview">${esc(text)}</pre>
+      <div class="hint">Se abrirá WhatsApp con este mensaje ya escrito; tú solo pulsas enviar.</div>
+      <div class="wa-row">${waButtonsHTML()}</div>
+      ${waContacts().length ? '' : '<div class="hint">Añade contactos en Ajustes para enviar con un solo clic.</div>'}</div></div>`, 'sm closable');
+}
+function waSecHTML() {
+  return `<h3>WhatsApp (envío manual, gratis)</h3>
+    <div class="hint">Desde un evento o un aviso, el botón <b>WhatsApp</b> abre el chat con el mensaje ya escrito y tú pulsas enviar. No es automático: WhatsApp no permite envíos automáticos gratis.</div>
+    ${S.settings.waContacts.map(c => `<div class="person"><div class="p-top"><input type="text" data-wc="name" data-id="${c.id}" value="${esc(c.name)}" maxlength="40" placeholder="Nombre (ej: Yo, Mamá)" aria-label="Nombre del contacto"><button class="icon-btn sm" data-act="wa-del" data-id="${c.id}" title="Quitar" aria-label="Quitar">${ic('trash', 'sm')}</button></div>
+      <div class="code-row"><input type="text" inputmode="tel" data-wc="number" data-id="${c.id}" value="${esc(c.number)}" placeholder="Número (ej: 3001234567)" aria-label="Número de WhatsApp"><button class="btn primary" data-act="wa-test" data-id="${c.id}" title="Abre el chat con un mensaje de prueba">Probar</button></div></div>`).join('')}
+    <div><button class="btn" data-act="wa-add">${ic('plus', 'sm')} Añadir contacto</button></div>
+    <div class="hint">Escribe el número con código de país (Colombia = 57). Si escribes 10 dígitos se asume Colombia (+57).</div>`;
+}
+function waChange(el) {
+  const c = S.settings.waContacts.find(x => x.id === el.dataset.id); if (!c) return;
+  if (el.dataset.wc === 'name') c.name = el.value.trim();
+  else {
+    const v = el.value.trim();
+    if (v && !waValid(v)) { toast('Número no válido: usa código de país y solo dígitos (ej: 573001234567)'); el.value = c.number; return; }
+    c.number = v;
+  }
+  save(); const s = $('#waSec'); if (s) s.innerHTML = waSecHTML();
+}
+
+/* =====================================================================
+   Sincronización entre computadores
+   Los datos viajan cifrados (AES-GCM; la clave solo está en el código de sincronización)
+   en un Gist secreto de GitHub. Cada elemento lleva la fecha de su última modificación;
+   al sincronizar se mezclan ambos lados: gana lo más reciente y los borrados se propagan.
+   ===================================================================== */
+const SYNC_FILE = 'calendario-pro.enc.json', SYNC_TOMB_DAYS = 90, SYNC_KINDS = { e: 'events', t: 'tasks', n: 'notes' };
+let syncTimer = null, syncBusy = false, syncAgain = false, syncErr = '', syncTried = 0;
+const syncSupported = () => !!(window.crypto && crypto.subtle);
+const syncApi = () => (S.sync.api || 'https://api.github.com').replace(/\/+$/, '');
+const b64enc = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+const b64url = bytes => b64enc(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64urlDec = s => b64dec(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4));
+const hashOf = o => hash53(JSON.stringify(o)).toString(36);
+const syncSoon = ms => { if (!S.sync.on) return; clearTimeout(syncTimer); syncTimer = setTimeout(syncRun, ms || 4000); };
+const ghFetch = (path, o = {}) => fetch(syncApi() + path, Object.assign({}, o, { headers: Object.assign({ Authorization: 'Bearer ' + S.sync.token, Accept: 'application/vnd.github+json' }, o.headers || {}) }));
+
+const syncKey = () => crypto.subtle.importKey('raw', b64urlDec(S.sync.key), 'AES-GCM', false, ['encrypt', 'decrypt']);
+async function syncEncrypt(obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await syncKey(), new TextEncoder().encode(JSON.stringify(obj))));
+  return JSON.stringify({ v: 1, iv: b64enc(iv), ct: b64enc(ct) });
+}
+async function syncDecrypt(text) {
+  const o = JSON.parse(text);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64dec(o.iv) }, await syncKey(), b64dec(o.ct))));
+}
+const syncCode = () => 'cpsync1.' + b64url(new TextEncoder().encode(JSON.stringify({ t: S.sync.token, g: S.sync.gist, k: S.sync.key, a: S.sync.api || undefined })));
+function parseSyncCode(code) {
+  try {
+    const s = String(code).trim(); if (!s.startsWith('cpsync1.')) return null;
+    const o = JSON.parse(new TextDecoder().decode(b64urlDec(s.slice(8))));
+    return o && o.t && o.g && o.k ? o : null;
+  } catch (e) { return null; }
+}
+function syncReset() { Object.assign(S.sync, { on: false, token: '', gist: '', key: '', api: '', etag: '', last: 0, first: false, pending: false, upd: {}, sig: {}, del: {}, bupd: {}, bsig: {} }); syncErr = ''; }
+
+/* bloques pequeños que se sincronizan enteros (gana el más reciente) */
+const syncBlocks = () => ({ cats: S.categories, wa: S.settings.waContacts, people: S.phone.people.map(p => ({ id: p.id, name: p.name, topic: p.topic, on: p.on })) });
+
+/* detecta qué cambió desde la última vez (altas, ediciones y borrados) y le pone fecha */
+function syncStamp() {
+  const Y = S.sync, now = Date.now(), seen = new Set(); let changed = false;
+  for (const ch of Object.keys(SYNC_KINDS)) for (const it of S[SYNC_KINDS[ch]]) {
+    if (it.demo) continue;
+    const k = ch + ':' + it.id, h = hashOf(it); seen.add(k);
+    if (Y.sig[k] !== h) { Y.sig[k] = h; Y.upd[k] = now; delete Y.del[k]; changed = true; }
+  }
+  for (const k of Object.keys(Y.sig)) if (!seen.has(k)) { delete Y.sig[k]; delete Y.upd[k]; Y.del[k] = now; changed = true; }
+  const B = syncBlocks();
+  for (const b of Object.keys(B)) { const h = hashOf(B[b]); if (Y.bsig[b] !== h) { Y.bsig[b] = h; Y.bupd[b] = now; changed = true; } }
+  for (const k of Object.keys(Y.del)) if (now - Y.del[k] > SYNC_TOMB_DAYS * DAY_MS) delete Y.del[k];
+  return changed;
+}
+
+function syncLocalPayload() {
+  const Y = S.sync, items = {}, blocks = {}, B = syncBlocks();
+  for (const ch of Object.keys(SYNC_KINDS)) for (const it of S[SYNC_KINDS[ch]]) { if (!it.demo) items[ch + ':' + it.id] = { u: Y.upd[ch + ':' + it.id] || 0, x: it }; }
+  for (const k of Object.keys(Y.del)) items[k] = { u: Y.del[k], del: true };
+  for (const b of Object.keys(B)) blocks[b] = { u: Y.bupd[b] || 0, x: B[b] };
+  return { v: 1, items, blocks };
+}
+
+function syncApplyItem(k, R) {
+  const Y = S.sync, arr = S[SYNC_KINDS[k[0]]], id = k.slice(2), i = arr.findIndex(x => x.id === id);
+  if (R.del) { if (i >= 0) arr.splice(i, 1); delete Y.sig[k]; delete Y.upd[k]; Y.del[k] = R.u; }
+  else { if (i >= 0) arr[i] = R.x; else arr.push(R.x); Y.sig[k] = hashOf(R.x); Y.upd[k] = R.u; delete Y.del[k]; }
+}
+function syncApplyBlock(b, R) {
+  if (b === 'cats' && Array.isArray(R.x) && R.x.length) S.categories = R.x;
+  else if (b === 'wa' && Array.isArray(R.x)) S.settings.waContacts = R.x;
+  else if (b === 'people' && Array.isArray(R.x)) { const old = new Map(S.phone.people.map(p => [p.id, p])); S.phone.people = R.x.map(p => Object.assign({}, old.get(p.id) || {}, p)); }
+  S.sync.bsig[b] = hashOf(syncBlocks()[b]); S.sync.bupd[b] = R.u;
+}
+
+/* mezcla lo remoto con lo local. Devuelve {out (lo que debe quedar guardado), toLocal, toRemote} */
+function syncMerge(remote) {
+  const Y = S.sync, local = syncLocalPayload(), out = { v: 1, items: {}, blocks: {} };
+  const rI = (remote && remote.items) || {}, rB = (remote && remote.blocks) || {};
+  let toLocal = false, toRemote = false;
+  const differs = (a, b) => !a !== !b || (!!a && !!b && (!!a.del !== !!b.del || (!a.del && hashOf(a.x) !== hashOf(b.x))));
+  for (const k of new Set([...Object.keys(local.items), ...Object.keys(rI)])) {
+    const L = local.items[k], R = rI[k], diff = differs(L, R);
+    let win = L || R;
+    if (L && R && diff) win = ((Y.first && !L.del && !R.del) || R.u > L.u) ? R : L;
+    out.items[k] = win;
+    if (diff && win === R) { syncApplyItem(k, R); toLocal = true; }
+    if (diff && win === L) toRemote = true;
+  }
+  for (const b of Object.keys(local.blocks)) {
+    const L = local.blocks[b], R = rB[b], diff = !!R && hashOf(R.x) !== hashOf(L.x);
+    let win = L;
+    if (diff && (Y.first || R.u > L.u)) win = R;
+    out.blocks[b] = win;
+    if (diff && win === R) { syncApplyBlock(b, R); toLocal = true; }
+    if (!R || (diff && win === L)) toRemote = true;
+  }
+  return { out, toLocal, toRemote };
+}
+
+async function syncRun(force) {
+  const Y = S.sync;
+  if (!Y.on || !Y.token || !Y.gist || !Y.key || !syncSupported()) return;
+  if (syncBusy) { syncAgain = true; return; }
+  syncBusy = true; syncAgain = false; syncTried = Date.now(); paintSync(true);
+  let retry = 0, applied = false;
+  try {
+    if (syncStamp()) Y.pending = true;
+    const h = {}; if (Y.etag && force !== true && !Y.first) h['If-None-Match'] = Y.etag;
+    const r = await ghFetch('/gists/' + Y.gist, { headers: h });
+    let push = null, etag = Y.etag;
+    if (r.status === 304) { if (Y.pending) push = syncLocalPayload(); }
+    else if (r.ok) {
+      const g = await r.json(), f = g.files && (g.files[SYNC_FILE] || Object.values(g.files)[0]);
+      let text = f ? f.content : '';
+      if (f && f.truncated) text = await (await fetch(f.raw_url)).text();
+      const remote = text ? await syncDecrypt(text) : null;
+      etag = r.headers.get('ETag') || '';
+      const res = syncMerge(remote);
+      applied = res.toLocal; Y.first = false;
+      if (res.toRemote || !remote) push = res.out; else Y.pending = false;
+    } else throw Object.assign(new Error('http'), { status: r.status });
+    if (push) {
+      const pr = await ghFetch('/gists/' + Y.gist, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: { [SYNC_FILE]: { content: await syncEncrypt(push) } } }) });
+      if (!pr.ok) throw Object.assign(new Error('http'), { status: pr.status });
+      etag = pr.headers.get('ETag') || ''; Y.pending = false;
+    }
+    Y.etag = etag; Y.last = Date.now(); syncErr = '';
+  } catch (e) {
+    syncErr = e.status === 401 ? 'GitHub rechazó el token (¿venció o lo borraste?). Crea uno nuevo y vuelve a conectar.'
+      : e.status === 404 ? 'No se encuentra el Gist. ¿Es el código correcto y de la misma cuenta de GitHub?'
+        : (e.status === 403 || e.status === 429) ? 'GitHub limitó las consultas por ahora; reintento en unos minutos.'
+          : e.name === 'OperationError' ? 'La clave no coincide con los datos guardados (código de otra sincronización).'
+            : e.status ? `GitHub respondió con error ${e.status}.` : 'Sin conexión con GitHub; reintentaré en un momento.';
+    retry = (e.status === 403 || e.status === 429) ? 300000 : (!e.status && e.name !== 'OperationError') ? 60000 : 0;
+  }
+  syncBusy = false;
+  save(true);
+  if (applied) { render(); if (S.phone.on) phoneSoon(); }
+  paintSync(true);
+  if (retry) { clearTimeout(syncTimer); syncTimer = setTimeout(syncRun, retry); }
+  else if (syncAgain) syncSoon(1500);
+}
+
+async function syncCreate(token) {
+  const Y = S.sync;
+  Object.assign(Y, { token, key: b64url(crypto.getRandomValues(new Uint8Array(32))), gist: '', etag: '', first: false, pending: true, upd: {}, sig: {}, del: {}, bupd: {}, bsig: {} });
+  syncStamp();
+  const r = await ghFetch('/gists', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: 'Calendario Pro (datos cifrados; no borrar)', public: false, files: { [SYNC_FILE]: { content: await syncEncrypt(syncLocalPayload()) } } }) });
+  if (!r.ok) throw Object.assign(new Error('http'), { status: r.status });
+  const g = await r.json(); Y.gist = g.id; Y.etag = r.headers.get('ETag') || ''; Y.on = true; Y.pending = false; Y.last = Date.now();
+}
+async function syncJoin(code) {
+  const o = parseSyncCode(code); if (!o) throw Object.assign(new Error('code'), { msg: 'Ese código no es válido. Cópialo completo desde el otro computador (empieza por cpsync1.).' });
+  Object.assign(S.sync, { on: true, token: o.t, gist: o.g, key: o.k, api: o.a || '', etag: '', first: true, pending: false, upd: {}, sig: {}, del: {}, bupd: {}, bsig: {} });
+  await syncRun(true);
+  if (syncErr) { const m = syncErr; syncReset(); throw Object.assign(new Error('sync'), { msg: m }); }
+}
+
+function syncAgo() { const m = Math.floor((Date.now() - S.sync.last) / 60000); return m < 1 ? 'hace un momento' : `hace ${human(m)}`; }
+function syncStatusHTML() {
+  const Y = S.sync; if (!Y.on) return '';
+  if (syncBusy) return 'Sincronizando…';
+  if (syncErr) return '⚠ ' + esc(syncErr);
+  if (!Y.last) return 'Conectando…';
+  return `✓ Sincronizado ${syncAgo()}${Y.pending ? ' · cambios por enviar' : ''}`;
+}
+function syncSecHTML() {
+  const Y = S.sync, head = '<h3>Sincronizar entre computadores</h3>';
+  if (!syncSupported()) return head + '<div class="hint">Este navegador no permite el cifrado necesario. Abre la app desde una dirección https (por ejemplo GitHub Pages) o usa Chrome/Edge.</div>';
+  if (!Y.on) return head + `<div class="hint">Guarda tus eventos, tareas y notas <b>cifrados</b> en un Gist secreto de tu GitHub para verlos igual en todos tus computadores. Solo tú (con el código de sincronización) puedes leerlos.</div>
+    <ol class="steps">
+      <li>Abre <a href="https://github.com/settings/tokens/new?scopes=gist&description=Calendario%20Pro" target="_blank" rel="noopener">este enlace de GitHub</a> con la cuenta donde quieras guardar los datos. En «Expiration» elige <b>No expiration</b>, pulsa <b>Generate token</b> y copia el token (empieza por <code>ghp_</code>).</li>
+      <li>Pégalo aquí y pulsa el botón:<div class="code-row"><input type="password" id="syncToken" placeholder="ghp_…" autocomplete="off" spellcheck="false"><button class="btn primary" data-act="sync-create">Crear sincronización</button></div></li>
+    </ol>
+    <div class="hint"><b>¿Ya la creaste en otro computador?</b> Pega aquí su código de sincronización:</div>
+    <div class="code-row"><input type="text" id="syncCode" placeholder="cpsync1.…" autocomplete="off" spellcheck="false"><button class="btn" data-act="sync-join">Conectar</button></div>
+    <div class="hint" id="syncStatus"></div>`;
+  return head + `<div class="hint" id="syncStatus">${syncStatusHTML()}</div>
+    <div class="set-row"><button class="btn primary" data-act="sync-now">Sincronizar ahora</button><button class="btn" data-act="sync-copy">Copiar código de sincronización</button></div>
+    <div class="hint">Para conectar otro computador, abre la app allí, ve a Ajustes → «Sincronizar entre computadores» y pega este código. <b>El código incluye un permiso de tu GitHub: trátalo como una contraseña</b> y no lo compartas.</div>
+    <div class="set-row"><span class="hint">Los datos siguen guardados en GitHub aunque desactives esto</span><button class="btn danger" data-act="sync-off">Desactivar en este equipo</button></div>`;
+}
+function syncFootHTML() { const Y = S.sync; return !Y.on ? '' : (syncErr ? '☁ Sincronización con problemas' : syncBusy ? '☁ Sincronizando…' : Y.last ? `☁ Sincronizado ${syncAgo()}` : '☁ Conectando…'); }
+function paintSync(statusOnly) {
+  const st = $('#syncStatus'), foot = $('#syncFoot');
+  if (foot) foot.innerHTML = syncFootHTML();
+  if (statusOnly) { if (st && S.sync.on) st.innerHTML = syncStatusHTML(); return; }
+  const sec = $('#syncSec'); if (sec) sec.innerHTML = syncSecHTML();
+  renderSidebar();
+}
+
+/* =====================================================================
+   Búsqueda
+   ===================================================================== */
+function doSearch(raw) {
+  const box = $('#searchRes'), q = norm(raw.trim());
+  if (q.length < 2) { box.hidden = true; return; }
+  const evs = S.events.filter(e => norm([e.title, e.notes, e.location].join(' ')).includes(q)).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8);
+  const tks = S.tasks.filter(t => norm(t.text + ' ' + (t.notes || '')).includes(q)).slice(0, 6);
+  const nts = S.notes.filter(n => norm(n.title + ' ' + n.body).includes(q)).slice(0, 6);
+  let h = '';
+  if (evs.length) h += `<div class="sr-h">Eventos</div>` + evs.map(e => `<div class="sr-i" data-act="open-event" data-id="${e.id}" data-occ="${e.date}"><span class="up-dot" style="--c:${catOf(e.cat).color}"></span><span>${esc(e.title)}</span><small>${fmtShort(e.date)}${e.repeat !== 'none' ? ' ↻' : ''}</small></div>`).join('');
+  if (tks.length) h += `<div class="sr-h">Tareas</div>` + tks.map(t => `<div class="sr-i" data-act="open-task" data-id="${t.id}">${ic('tasks', 'sm')}<span>${esc(t.text)}</span><small>${t.done ? 'hecha' : t.date ? fmtShort(t.date) : ''}</small></div>`).join('');
+  if (nts.length) h += `<div class="sr-h">Notas</div>` + nts.map(n => `<div class="sr-i" data-act="open-note" data-id="${n.id}">${ic('note', 'sm')}<span>${esc(n.title || 'Sin título')}</span></div>`).join('');
+  box.innerHTML = h || '<div class="empty-s" style="padding:12px">Sin resultados</div>';
+  box.hidden = false;
+}
+const closeSearch = () => { $('#searchRes').hidden = true; };
+
+/* =====================================================================
+   Acciones (delegación de eventos)
+   ===================================================================== */
+let installEvt = null;
+function nav(dir) {
+  const v = S.settings.view, d = parseDate(ui.cursor);
+  if (v === 'month') { d.setDate(1); d.setMonth(d.getMonth() + dir); setCursor(fmtDate(d)); }
+  else setCursor(addDays(ui.cursor, dir * (v === 'week' ? 7 : v === 'day' ? 1 : 30)));
+  render();
+}
+function newNote() {
+  const n = { id: uid(), title: '', body: '', pinned: false, created: Date.now(), updated: Date.now() };
+  S.notes.push(n); ui.noteId = n.id; ui.noteOpen = true; ui.noteQuery = ''; save(); render();
+  setTimeout(() => { const t = $('#noteTitle'); if (t) t.focus(); }, 30);
+}
+const findAlert = el => alerts.find(a => a.aid === el.dataset.aid);
+const dropAlert = a => { alerts.splice(alerts.indexOf(a), 1); renderAlerts(); };
+
+const A = {
+  'section': el => { ui.section = el.dataset.s; ui.sidebarOpen = false; document.body.classList.remove('sb-open'); render(); },
+  'today': () => { setCursor(today()); render(); },
+  'prev': () => nav(-1), 'next': () => nav(1),
+  'view': el => { S.settings.view = el.dataset.v; save(); render(); },
+  'new-event': () => { document.body.classList.remove('sb-open'); ui.section = 'calendar'; openEventModal({ date: ui.cursor }); },
+  'cell': el => { if (narrow()) { setCursor(el.dataset.date); render(); } else openEventModal({ date: el.dataset.date, time: defaultStart(el.dataset.date), allDay: false }); },
+  'new-event-day': el => openEventModal({ date: el.dataset.date, allDay: true }),
+  'slot': (el, e) => {
+    const r = el.getBoundingClientRect(), y = e.clientY - r.top, mins = Math.max(0, Math.min(23 * 60 + 30, Math.floor(y / HH * 2) * 30));
+    openEventModal({ date: el.dataset.date, time: fromMin(mins) });
+  },
+  'goto-day': el => { setCursor(el.dataset.date); if (S.settings.view === 'month' || S.settings.view === 'agenda' || S.settings.view === 'week') S.settings.view = 'day'; ui.section = 'calendar'; save(); render(); },
+  'open-event': el => openEventModal({ id: el.dataset.id, occ: el.dataset.occ }),
+  'open-task': el => openTaskModal({ id: el.dataset.id }),
+  'open-note': el => { ui.section = 'notes'; ui.noteId = el.dataset.id; ui.noteOpen = true; render(); },
+  'toggle-task': el => { const t = S.tasks.find(x => x.id === el.dataset.id); if (!t) return; t.done = !t.done; t.doneAt = t.done ? Date.now() : null; save(); render(); },
+  'task-del': el => deleteTask(el.dataset.id),
+  'task-filter': el => { ui.taskFilter = el.dataset.v; render(); },
+  'mini-prev': () => { const d = parseDate(ui.mini); d.setMonth(d.getMonth() - 1); ui.mini = fmtDate(d); renderSidebar(); },
+  'mini-next': () => { const d = parseDate(ui.mini); d.setMonth(d.getMonth() + 1); ui.mini = fmtDate(d); renderSidebar(); },
+  'mini-pick': el => { setCursor(el.dataset.date); ui.section = 'calendar'; ui.sidebarOpen = false; document.body.classList.remove('sb-open'); render(); },
+  'toggle-cat': el => { const h = S.settings.hiddenCats, i = h.indexOf(el.dataset.id); if (i >= 0) h.splice(i, 1); else h.push(el.dataset.id); save(); render(); },
+  'toggle-showtasks': () => { S.settings.showTasks = !S.settings.showTasks; save(); render(); },
+  'toggle-theme': () => { S.settings.theme = resolvedTheme() === 'dark' ? 'light' : 'dark'; save(); applyTheme(); },
+  'toggle-sidebar': () => document.body.classList.toggle('sb-open'),
+  'close-sidebar': () => document.body.classList.remove('sb-open'),
+  'settings': () => { document.body.classList.remove('sb-open'); openSettings(); },
+  'export-json': exportJSON, 'export-ics': exportICS,
+  'import-json': () => $('#fileIn').click(),
+  'enable-notif': () => { if (!('Notification' in window)) return; Notification.requestPermission().then(p => { renderBanner(); if (dlg.open && dlg.querySelector('#setBody')) openSettings(); if (p === 'granted') toast('Notificaciones activadas'); }); },
+  'dismiss-banner': () => { try { sessionStorage.setItem('nb', '1'); } catch (e) { } renderBanner(); },
+  'install': () => { if (installEvt) { installEvt.prompt(); installEvt = null; renderSidebar(); } },
+  'test-alert': () => { unlockAudio(); raiseAlert({ kind: 'event', title: 'Así se verá un recordatorio', date: today(), time: fromMin(nowMin() + 10), when: Date.now() + 600000, color: '#4f6bff' }); },
+  'cat-add': () => { S.categories.push({ id: uid(), name: 'Nueva categoría', color: PALETTE[S.categories.length % PALETTE.length] }); save(); dlg._paintCats(); render(); },
+  'cat-del': async el => {
+    if (S.categories.length < 2) return;
+    const r = await ask({ title: 'Eliminar categoría', text: 'Los eventos y tareas de esta categoría pasarán a la primera categoría de la lista.', buttons: [{ label: 'Eliminar', value: 1, cls: 'danger' }, { label: 'Cancelar', value: null }] });
+    openSettings();
+    if (!r) return;
+    const id = el.dataset.id; S.categories = S.categories.filter(c => c.id !== id); const fb = S.categories[0].id;
+    S.events.forEach(e => { if (e.cat === id) e.cat = fb; }); S.tasks.forEach(t => { if (t.cat === id) t.cat = fb; });
+    save(); dlg._paintCats(); render();
+  },
+  'clear-demo': () => { const snap = snapshot(); S.events = S.events.filter(e => !e.demo); S.tasks = S.tasks.filter(e => !e.demo); S.notes = S.notes.filter(e => !e.demo); save(); closeDialog(); render(); toast('Ejemplos eliminados', { undo: snap }); },
+  'wipe': async () => {
+    const r = await ask({ title: 'Borrar todos los datos', text: 'Se eliminarán TODOS tus eventos, tareas y notas de este navegador.' + (S.sync.on ? ' <b>Como la sincronización está activa, también se borrarán en tus otros computadores.</b>' : '') + ' Puedes deshacerlo justo después, pero conviene exportar una copia antes.', buttons: [{ label: 'Borrar todo', value: 1, cls: 'danger' }, { label: 'Cancelar', value: null }] });
+    if (!r) { openSettings(); return; }
+    const snap = snapshot(); S.events = []; S.tasks = []; S.notes = []; S.fired = {}; S.snoozes = []; save(); closeDialog(); render(); toast('Datos borrados', { undo: snap, ms: 8000 });
+  },
+  'sync-create': async () => {
+    const inp = $('#syncToken'), tok = (inp ? inp.value : '').trim(), st = $('#syncStatus');
+    if (!/^[A-Za-z0-9_]{20,255}$/.test(tok)) { toast('Ese no parece un token de GitHub (empieza por ghp_)'); return; }
+    st.textContent = 'Creando sincronización…';
+    try { await syncCreate(tok); save(true); paintSync(); toast('Sincronización creada. Copia el código y pégalo en tus otros computadores', { ms: 6000 }); }
+    catch (e) { syncReset(); st.textContent = '⚠ ' + (e.status === 401 ? 'GitHub rechazó el token.' : e.status === 403 ? 'El token no tiene permiso «gist» o GitHub limitó las consultas.' : e.status ? `GitHub respondió con error ${e.status}.` : 'Sin conexión con GitHub.'); }
+  },
+  'sync-join': async () => {
+    const inp = $('#syncCode'), st = $('#syncStatus');
+    st.textContent = 'Conectando…';
+    try { await syncJoin(inp ? inp.value : ''); paintSync(); toast('Conectado: tus datos ya se están sincronizando', { ms: 5000 }); }
+    catch (e) { st.textContent = '⚠ ' + (e.msg || 'No se pudo conectar.'); }
+  },
+  'sync-now': () => { syncRun(true); },
+  'sync-copy': () => copyText(syncCode(), 'Código de sincronización copiado'),
+  'sync-off': async () => {
+    const r = await ask({ title: 'Desactivar sincronización en este equipo', text: 'Este computador dejará de enviar y recibir cambios. Tus datos locales se conservan y los guardados en GitHub no se borran.', buttons: [{ label: 'Desactivar', value: 1, cls: 'danger' }, { label: 'Cancelar', value: null }] });
+    openSettings(); if (!r) return;
+    syncReset(); save(true); paintSync(); toast('Sincronización desactivada en este equipo');
+  },
+  'wa-add': () => { S.settings.waContacts.push({ id: 'w' + uid(), name: S.settings.waContacts.length ? '' : 'Yo', number: '' }); save(); const s = $('#waSec'); if (s) s.innerHTML = waSecHTML(); },
+  'wa-del': el => { S.settings.waContacts = S.settings.waContacts.filter(c => c.id !== el.dataset.id); save(); const s = $('#waSec'); if (s) s.innerHTML = waSecHTML(); },
+  'wa-test': el => { const c = S.settings.waContacts.find(x => x.id === el.dataset.id); if (!c || !waValid(c.number)) { toast('Escribe primero un número válido'); return; } window.open(waLink(c.number, '✅ Prueba de Calendario Pro: así te llegará un evento por WhatsApp.'), '_blank', 'noopener'); },
+  'wa-send': el => { const c = S.settings.waContacts.find(x => x.id === el.dataset.id); window.open(waLink(c && waValid(c.number) ? c.number : '', waText), '_blank', 'noopener'); },
+  'al-wa': el => {
+    const a = findAlert(el); if (!a) return; let text = '';
+    if (a.kind === 'task') { const t = S.tasks.find(x => x.id === a.refId); if (t) text = taskShareText(t); }
+    else { const ev = S.events.find(x => x.id === a.refId); if (ev) text = eventShareText(ev, a.occ); }
+    waShareDialog(text || `⏰ *${a.title}*\n${alertSub(a)}`);
+  },
+  'phone-test': el => phoneTest(el.dataset.id),
+  'phone-add': () => { S.phone.people.push(newPerson(`Celular ${S.phone.people.length + 1}`)); save(); paintPhone(); },
+  'phone-del': el => { S.phone.people = S.phone.people.filter(p => p.id !== el.dataset.id); save(); paintPhone(); toast('Celular quitado; sus avisos pendientes se cancelarán'); },
+  'phone-copy': el => { const p = S.phone.people.find(x => x.id === el.dataset.id); if (p) copyText(p.topic, 'Código copiado'); },
+  'phone-invite': el => { const p = S.phone.people.find(x => x.id === el.dataset.id); if (p) copyText(phoneInvite(p), 'Invitación copiada: pégala en WhatsApp'); },
+  'phone-newcode': async el => {
+    const r = await ask({ title: 'Generar código nuevo', text: 'El código actual dejará de funcionar y tendrás que suscribir de nuevo ese celular con el código nuevo.', buttons: [{ label: 'Generar', value: 1, cls: 'primary' }, { label: 'Cancelar', value: null }] });
+    openSettings(); if (!r) return;
+    const p = S.phone.people.find(x => x.id === el.dataset.id); if (!p) return;
+    p.topic = randomTopic(); save(); paintPhone(); toast('Código nuevo listo: vuelve a suscribir ese celular');
+  },
+  'new-note': newNote,
+  'select-note': el => { ui.noteId = el.dataset.id; ui.noteOpen = true; render(); },
+  'note-back': () => { ui.noteOpen = false; render(); },
+  'note-pin': () => { const n = S.notes.find(x => x.id === ui.noteId); if (n) { n.pinned = !n.pinned; save(); render(); } },
+  'note-copy': () => { const n = S.notes.find(x => x.id === ui.noteId); if (!n) return; const txt = (n.title ? n.title + '\n\n' : '') + n.body; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Nota copiada')).catch(() => toast('No se pudo copiar')); },
+  'note-del': () => { const snap = snapshot(); S.notes = S.notes.filter(x => x.id !== ui.noteId); ui.noteId = null; ui.noteOpen = false; save(); render(); toast('Nota eliminada', { undo: snap }); },
+  'al-dismiss': el => { const a = findAlert(el); if (a) dropAlert(a); },
+  'al-snooze': el => { const a = findAlert(el); if (!a) return; const min = +el.dataset.min, info = Object.assign({}, a); delete info.aid; S.snoozes.push({ at: Date.now() + min * 60000, info }); save(); dropAlert(a); toast(`Te lo recuerdo en ${human(min)}`); },
+  'al-done': el => { const a = findAlert(el); if (!a) return; const t = S.tasks.find(x => x.id === a.refId); if (t) { t.done = true; t.doneAt = Date.now(); save(); render(); } dropAlert(a); },
+  'al-open': el => { const a = findAlert(el); if (!a) return; if (a.kind === 'task') openTaskModal({ id: a.refId }); else openEventModal({ id: a.refId, occ: a.occ }); dropAlert(a); }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!e.target.closest('.search')) closeSearch();
+  if (!el) return;
+  const fn = A[el.dataset.act];
+  if (!fn) return;
+  if (e.target.closest('#searchRes')) closeSearch();
+  fn(el, e);
+});
+
+/* arrastrar y soltar en la vista mensual */
+let drag = null;
+document.addEventListener('dragstart', e => {
+  const c = e.target.closest && e.target.closest('.chip[data-id]'); if (!c) return;
+  drag = { id: c.dataset.id, occ: c.dataset.occ, task: c.classList.contains('task') };
+  e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', c.dataset.id); } catch (_) { }
+});
+document.addEventListener('dragover', e => { const c = e.target.closest && e.target.closest('.cell'); if (drag && c) { e.preventDefault(); $$('.cell.drop').forEach(x => x !== c && x.classList.remove('drop')); c.classList.add('drop'); } });
+document.addEventListener('dragend', () => { drag = null; $$('.cell.drop').forEach(x => x.classList.remove('drop')); });
+document.addEventListener('drop', e => {
+  const c = e.target.closest && e.target.closest('.cell'); if (!drag || !c) return;
+  e.preventDefault(); const target = c.dataset.date, snap = snapshot();
+  if (drag.task) { const t = S.tasks.find(x => x.id === drag.id); if (t && t.date !== target) { t.date = target; save(); render(); toast(`Tarea movida al ${fmtShort(target)}`, { undo: snap }); } }
+  else {
+    const ev = S.events.find(x => x.id === drag.id), delta = diffDays(drag.occ, target);
+    if (ev && delta) { ev.date = addDays(ev.date, delta); if (ev.endDate) ev.endDate = addDays(ev.endDate, delta); if (ev.until) ev.until = addDays(ev.until, delta); save(); render(); toast(`Movido al ${fmtShort(target)}`, { undo: snap }); }
+  }
+  drag = null;
+});
+
+/* entradas de texto (delegadas para sobrevivir a los renders) */
+document.addEventListener('input', e => {
+  const id = e.target.id;
+  if (id === 'quick') $('#quickPrev').innerHTML = previewHTML(parseQuick(e.target.value), false);
+  else if (id === 'taskQuick') $('#taskPrev').innerHTML = previewHTML(parseQuick(e.target.value, { task: true }), true);
+  else if (id === 'search') doSearch(e.target.value);
+  else if (id === 'noteSearch') { ui.noteQuery = e.target.value; $('#nList').innerHTML = noteListHTML(noteList()); }
+  else if (id === 'noteTitle' || id === 'noteBody') {
+    const n = S.notes.find(x => x.id === ui.noteId); if (!n) return;
+    if (id === 'noteTitle') n.title = e.target.value; else n.body = e.target.value;
+    delete n.demo; n.updated = Date.now(); saveSoon();
+    $('#nList').innerHTML = noteListHTML(noteList()); $('#noteStat').textContent = noteStatus(n);
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset && (e.target.dataset.phone || e.target.dataset.pid)) { phoneChange(e.target); return; }
+  if (e.target.dataset && e.target.dataset.wc) { waChange(e.target); return; }
+  const k = e.target.dataset && e.target.dataset.set; if (k) {
+    let v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (k === 'weekStart' || k === 'allDayHour') v = +v;
+    else if (k === 'hour12') v = v === 'true';
+    else if (k === 'defaultReminder') v = v === '' ? null : +v;
+    S.settings[k] = v; save(); render(); return;
+  }
+  if (e.target.dataset && e.target.dataset.cc) { const c = S.categories.find(x => x.id === e.target.dataset.cc); if (c) { c.color = e.target.value; save(); render(); } }
+  if (e.target.dataset && e.target.dataset.cn) { const c = S.categories.find(x => x.id === e.target.dataset.cn); if (c) { c.name = e.target.value.trim() || c.name; save(); render(); } }
+});
+document.addEventListener('keydown', e => {
+  const id = e.target.id;
+  if (e.key === 'Enter' && id === 'quick') {
+    e.preventDefault();
+    const v = e.target.value.trim(); if (!v) return;
+    const p = parseQuick(v);
+    if (!p.title) { toast('Escribe un título para el evento'); return; }
+    if (p.kind === 'task') { addQuickTask(p); }
+    else if (e.shiftKey || e.altKey) { openEventModal({ prefill: p }); }
+    else { const d = quickEventData(p); S.settings.lastCat = d.cat; S.events.push(Object.assign({ id: uid(), created: Date.now() }, d)); save(); setCursor(d.date); render(); toast(`Creado: ${d.title} · ${fmtShort(d.date)}${p.time ? ' ' + fmtTime(p.time) : ''}`); }
+    e.target.value = ''; $('#quickPrev').innerHTML = ''; if (e.shiftKey || e.altKey) return;
+    return;
+  }
+  if (e.key === 'Enter' && id === 'taskQuick') {
+    e.preventDefault(); const v = e.target.value.trim(); if (!v) return;
+    const p = parseQuick(v, { task: true }); if (!p.title) { toast('Escribe qué hay que hacer'); return; }
+    addQuickTask(p); e.target.value = ''; $('#taskPrev').innerHTML = ''; return;
+  }
+  if (e.key === 'Enter' && id === 'search') { const f = $('#searchRes [data-act]'); if (f) f.click(); return; }
+  if (e.key === 'Escape') { if (!dlg.open) { closeSearch(); document.body.classList.remove('sb-open'); if (id === 'search') e.target.blur(); } return; }
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable || dlg.open || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase(), views = { m: 'month', s: 'week', w: 'week', d: 'day', a: 'agenda' };
+  if (k === 'n') { e.preventDefault(); openEventModal({ date: ui.cursor }); }
+  else if (k === 't') { setCursor(today()); render(); }
+  else if (views[k]) { ui.section = 'calendar'; S.settings.view = views[k]; save(); render(); }
+  else if (k === 'arrowleft' && ui.section === 'calendar') nav(-1);
+  else if (k === 'arrowright' && ui.section === 'calendar') nav(1);
+  else if (k === '/') { e.preventDefault(); $('#search').focus(); }
+  else if (k === 'q') { e.preventDefault(); ui.section = 'calendar'; render(); $('#quick').focus(); }
+});
+function addQuickTask(p) {
+  const rem = p.remind != null ? p.remind : (p.date && p.time && S.settings.defaultReminder != null ? S.settings.defaultReminder : null);
+  S.tasks.push({ id: uid(), text: p.title, notes: '', done: false, date: p.date || '', time: p.date ? (p.time || '') : '', remind: p.date ? rem : null, priority: 0, cat: p.cat || '', created: Date.now() });
+  save(); render(); toast('Tarea agregada');
+}
+
+/* archivo oculto para importar */
+const fileIn = document.createElement('input'); fileIn.type = 'file'; fileIn.accept = '.json,application/json'; fileIn.id = 'fileIn'; fileIn.hidden = true;
+fileIn.addEventListener('change', () => { if (fileIn.files[0]) importJSON(fileIn.files[0]); fileIn.value = ''; });
+document.body.appendChild(fileIn);
+
+/* =====================================================================
+   Arranque
+   ===================================================================== */
+window.addEventListener('beforeunload', () => { clearTimeout(saveTimer); save(); });
+window.addEventListener('pagehide', () => { clearTimeout(saveTimer); save(); });
+window.addEventListener('storage', e => { if (e.key === KEY) { const active = document.activeElement; load(); if (!(active && (active.id === 'noteBody' || active.id === 'noteTitle'))) render(); } });
+let rsz; let wasNarrow = narrow();
+window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (narrow() !== wasNarrow) { wasNarrow = narrow(); render(); } else fitMonth(); }, 120); });
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; renderSidebar(); });
+window.addEventListener('appinstalled', () => { installEvt = null; renderSidebar(); });
+window.addEventListener('online', () => { syncSoon(500); if (S.phone.on) phoneSoon(); });
+mq.addEventListener && mq.addEventListener('change', () => { if (S.settings.theme === 'auto') applyTheme(); });
+
+function boot() {
+  load();
+  $('#newEventBtn').innerHTML = `${ic('plus')} Nuevo evento`;
+  $('#menuBtn').innerHTML = ic('menu'); $('#setBtn').innerHTML = ic('sliders'); $('#searchIcon').innerHTML = ic('search');
+  $('#prevBtn').innerHTML = ic('left'); $('#nextBtn').innerHTML = ic('right'); $('#fab').innerHTML = ic('plus');
+  $('.sb-title .icon-btn').innerHTML = ic('edit', 'sm');
+  render();
+  if (!storageOK) toast('Este navegador no permite guardar datos. Usa «Exportar copia» para no perder nada.', { ms: 9000 });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
+  if (/^https?:$/.test(location.protocol)) {
+    const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.json'; document.head.appendChild(l);
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { });
+  }
+  startTicker();
+  setTimeout(tick, 800);
+}
+window.CalPro = { parseQuick, occurrences, collect, tick, save, render, get state() { return S; } };
+boot();
+})();
+</script>
+</body>
+</html>

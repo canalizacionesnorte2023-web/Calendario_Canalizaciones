@@ -1,0 +1,14 @@
+{
+  "name": "Calendario Pro",
+  "short_name": "Calendario",
+  "description": "Calendario con recordatorios, tareas y notas. Funciona sin internet.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5fa",
+  "theme_color": "#4f6bff",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

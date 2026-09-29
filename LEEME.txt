@@ -1,0 +1,75 @@
+CALENDARIO PRO
+==============
+
+CÓMO ABRIRLO
+  Haz doble clic en  index.html  (se abre en Chrome, Edge, Firefox o Safari).
+  No necesita internet ni instalar nada.
+
+QUÉ INCLUYE
+  - Calendario en vistas Mes / Semana / Día / Agenda
+  - Eventos con varios recordatorios, repetición (diaria, semanal, mensual, anual...) y categorías
+  - Escritura rápida:  «Dentista mañana 4pm»  ·  «Gimnasio cada lunes 6pm»  ·  «Pagar arriendo el 5»
+  - Tareas con fecha, prioridad y aviso
+  - Notas libres con búsqueda
+  - Modo claro / oscuro, búsqueda global, arrastrar eventos entre días
+  - Atajos: N nuevo · T hoy · M/S/D/A vistas · flechas · / buscar · Q escribir rápido
+
+RECORDATORIOS (importante)
+  Suenan y aparecen en pantalla MIENTRAS la página esté abierta en una pestaña
+  (puede estar minimizada o en segundo plano). Si la cierras, los avisos de las
+  últimas 24 horas te aparecen al volver a abrirla.
+  Para recibir notificaciones del sistema, pulsa «Activar» en el aviso que sale arriba.
+
+RECORDATORIOS EN EL CELULAR (uno o varios)
+  Ajustes > «Avisos en el celular» > activar. Es gratis y no pide cuentas.
+  1. En cada celular instala la app gratis «ntfy» (Android: Play Store · iPhone: App Store).
+  2. En Calendario Pro pulsa «Añadir otro celular» por cada persona (tú, tu pareja, tu mamá...).
+     Cada celular tiene su propio CÓDIGO (no se usan números de teléfono; el nombre puede ser
+     el número, solo sirve para reconocerlo).
+  3. En el celular: abre ntfy, pulsa «+» y escribe ese código. El botón «Invitación» copia un
+     mensaje listo para mandarlo por WhatsApp. «Probar» envía un aviso de prueba.
+  Los avisos de las próximas 72 horas se programan en el servicio ntfy.sh y llegan a la hora
+  exacta aunque el computador esté apagado. Si cambias o borras un evento, se actualiza solo.
+  Abre Calendario Pro al menos una vez cada 3 días para que siga programando.
+  Privacidad: el título y la hora de cada aviso pasan por ntfy.sh; solo los ve quien tenga el
+  código. No compartas el código con quien no deba ver tus recordatorios.
+  Todos los celulares activos reciben todos los recordatorios.
+
+ENVIAR UN EVENTO POR WHATSAPP (gratis, manual)
+  En cualquier evento (botón «WhatsApp») o en un aviso, se abre WhatsApp con el mensaje ya escrito
+  y tú pulsas enviar. En Ajustes > «WhatsApp» puedes guardar contactos (nombre + número con código
+  de país; con 10 dígitos se asume Colombia +57). No es automático: WhatsApp no permite envíos
+  automáticos gratis.
+
+USARLO EN VARIOS COMPUTADORES (con los datos sincronizados)
+  PASO 1 - Subir la app a internet (una sola vez, GitHub Pages)
+    1. En github.com, abre tu repositorio (Calendario_Canalizaciones), pulsa «Add file» >
+       «Upload files» y arrastra: index.html, manifest.json, sw.js, icon.svg  (LEEME.txt es opcional).
+       Pulsa «Commit changes».
+    2. Settings > Pages > «Deploy from a branch» > rama main, carpeta / (root) > Save.
+    3. En 1 o 2 minutos queda en:
+       https://canalizacionesnorte2023-web.github.io/Calendario_Canalizaciones/
+    4. Abre esa dirección en cada computador. En Chrome/Edge puedes «Instalar» como app.
+    (El repositorio es público, pero solo contiene la app: tus datos NO están ahí.)
+    Al cambiar de la carpeta local a esa dirección el navegador empieza vacío: pasa tus datos
+    una vez con Ajustes > «Exportar copia» y luego «Importar copia» en la dirección nueva.
+
+  PASO 2 - Sincronizar los datos entre computadores
+    En el primer computador: Ajustes > «Sincronizar entre computadores».
+      1. Abre el enlace que aparece, inicia sesión en GitHub (mejor con TU cuenta personal si los datos
+         son personales), elige «No expiration» y pulsa «Generate token». Copia el token (ghp_...).
+      2. Pégalo en la app y pulsa «Crear sincronización».
+      3. Pulsa «Copiar código de sincronización».
+    En cada otro computador: abre la app > Ajustes > «Sincronizar...» > pega el código > «Conectar».
+    Desde entonces lo que agregues, edites o borres en uno aparece en los demás en menos de un minuto
+    (y al volver a la pestaña). Si dos equipos editan lo mismo a la vez, gana el cambio más reciente.
+    Los datos se guardan CIFRADOS en un Gist secreto de esa cuenta de GitHub; sin el código de
+    sincronización nadie puede leerlos (ni siquiera GitHub).
+    El código incluye un permiso de tu GitHub: trátalo como una contraseña.
+    Si «Borras todos los datos» con la sincronización activa, también se borran en los otros equipos.
+
+  Alternativa sin internet: Exportar copia (.json) en un equipo e Importar copia en el otro.
+
+ARCHIVOS
+  index.html     La aplicación completa (lo único imprescindible)
+  manifest.json, sw.js, icon.svg   Solo para instalarla como app cuando está en un hosting
